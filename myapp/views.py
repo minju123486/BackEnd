@@ -3,19 +3,20 @@ from django.shortcuts import render, HttpResponse, redirect
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-#import openai
-#import os
-
-
-user_data = dict()
-
-
 from django.shortcuts import render 
 from django.http import JsonResponse
 from myapp import gpt_prompt
 import openai
 import os
+# from django.conf import settings
 
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', './capde.settings.py')
+# settings.configure()
+
+user_data = dict()
+
+
+openai.api_key = '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'
 
 history = []
 def get_completion(prompt):     
@@ -24,6 +25,9 @@ def get_completion(prompt):
        model="gpt-4",
        messages=[{"role": "system", "content": gpt_prompt.Short_answer_message}, {'role':'user','content':gpt_prompt.prompt_4}], 
        max_tokens=1024, 
+
+
+
        n=1,
        stop=None,
        temperature=0.5, 
