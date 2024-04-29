@@ -328,7 +328,6 @@ def lecture_apply(request): # for student
         lecture_number = request.data.get('lecture_id')
         coursename = request.data.get('course')
         obj = course.objects.filter(name = coursename).first()
-        lecture_number = request.data.get('lecture_number')
         sl = student_lecture.objects.create(username = user_name, course_name = coursename, course_id = obj.id, lecture_id = lecture_number, name = user_name) # name은 나중에 실제이름으로 대체
         sl.save()
         return Response({'message':'success'}, status = 200)
@@ -336,7 +335,7 @@ def lecture_apply(request): # for student
         print("강의신청 되지않음")
         return Response({'message':'fail'}, status = 444)
     
-@api_view(['POST'])   
+@api_view(['GET'])   
 def my_lecture_show(request): # for student
     try:
         obj = student_lecture.objects.filter(username = request.user.username)
