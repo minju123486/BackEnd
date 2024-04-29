@@ -293,7 +293,7 @@ def lecture_generate(request): ## my 강의
             return Response({'message':'This lecture is already'}, status = 422)
         
         obj = course.objects.filter(name = coursename).first()
-        pl = professor_lecture.objects.create(username = user_name, course_name = coursename, course_id = obj.id)
+        pl = professor_lecture.objects.create(username = user_name, course_name = coursename, course_id = obj.id, name = request.user.name)
         pl.save()
         return Response({'message':'success'}, status = 200)
     except:
@@ -317,6 +317,7 @@ def lecture_view(request): # for student
         print(obj)
         if not obj.exists():
             rtr['lecture'].append(tempt)
+    print(rtr)
     return Response(rtr, status=status.HTTP_200_OK)
 
 
@@ -347,8 +348,8 @@ def my_lecture_show(request): # for student
             tempt['course'] = i.course_name
             tempt['professor'] = tmp.name
             tempt['lecture_id'] = i.lecture_id
-            rtr.append(tempt) 
+            rtr['lecture'].append(tempt)
         return Response({'message':'success'}, status = 200)
     except:
-        print("강의신청 되지않음")
+        print("강의보여지지 않음.")
         return Response({'message':'fail'}, status = 444)
