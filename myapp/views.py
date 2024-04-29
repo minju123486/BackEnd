@@ -345,8 +345,8 @@ def my_lecture_show(request): # for student
         for i in obj:
             tmp = professor_lecture.objects.filter(id = i.lecture_id).first()
             tempt = dict()
-            tempt['course_name'] = i.course_name
-            tempt['professor_name'] = tmp.name
+            tempt['course'] = i.course_name
+            tempt['professor'] = tmp.name
             tempt['lecture_id'] = i.lecture_id
             rtr.append(tempt) 
         return Response({'message':'success'}, status = 200)
