@@ -74,5 +74,6 @@ def generate_daily(request):
     why = request.data.get('why')
     response = generate_blog(who, what, why, where, when, how, prompt_korean_template)
     print(response)
+    lst = list(response.split("\n"))
     print(type(response))
-    return Response({'diaryText' : response}, status=status.HTTP_200_OK)
+    return Response({'diaryText' : lst}, status=status.HTTP_200_OK)

@@ -349,7 +349,8 @@ def my_lecture_show(request): # for student
             tempt['professor'] = tmp.name
             tempt['lecture_id'] = i.lecture_id
             rtr['lecture'].append(tempt)
-        return Response({'message':'success'}, status = 200)
+        print(rtr)
+        return Response(rtr, status = 200)
     except:
         print("강의보여지지 않음.")
         return Response({'message':'fail'}, status = 444)
