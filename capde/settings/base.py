@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'Login',
     'myapp',
+    'daily',
 ]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

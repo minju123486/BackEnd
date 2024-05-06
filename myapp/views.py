@@ -17,16 +17,23 @@ from myapp import gpt_prompt
 import openai
 import os
 from .models import course, professor_lecture, student_lecture, problem, answer
-# env = environ.Env()
-# environ.Env.read_env(Path(__file__).resolve().parent/'.env')
-# openai.api_key = env('Key')
+from .crawling import crawl_lst
+
+
+env = environ.Env()
+environ.Env.read_env(Path(__file__).resolve().parent/'.env')
+openai.api_key = env('Key')
+
+Sub_dict = {"자바프로그래밍" : 1, "C++프로그래밍" : 2, "파이썬프로그래밍" : 3}
+
+
 Quest_dict = {'객관식-빈칸': 1, '객관식-단답형': 2, '객관식-문장형': 3, '단답형-빈칸': 4, '단답형-문장형': 5, 'OX선택형-O/X': 6, '서술형-코딩': 7}
 history = []
-def get_completion(prompt, numberKey,count):     
-    history.append({'role':'user','content':gpt_prompt.prompt_1}) 
+def get_completion(prompt, numberKey,count, subject, rags):     
+    history.append({'role':'user','content':gpt_prompt.prompt_lst[numberKey](count,subject, rags)}) 
     query = openai.ChatCompletion.create( 
        model="gpt-4-turbo",
-       messages=[{"role": "system", "content": gpt_prompt.System_lst[numberKey]}, {'role':'user','content':gpt_prompt.prompt_lst[numberKey](count)}], 
+       messages=[{"role": "system", "content": gpt_prompt.System_lst[numberKey]}, {'role':'user','content':gpt_prompt.prompt_lst[numberKey](count,subject, rags)}], 
        max_tokens=1024, 
        n=1,
        stop=None,
@@ -40,10 +47,10 @@ def get_completion(prompt, numberKey,count):
 def index(request):
     return HttpResponse("Communication start")
     
-def query_view(request,numberKey, count): 
+def query_view(request,numberKey, count, subject, rags): 
     prompt = request.data.get('username') 
     prompt=str(prompt)
-    response = get_completion(prompt, numberKey,count)
+    response = get_completion(prompt, numberKey,count, subject, rags)
     return JsonResponse({'response': response}), response 
 
 def GenerateWriteProblem(tmp):
@@ -175,22 +182,38 @@ def Code_problem(tmp):
     # print(rtr)
     return rtr
             
-            
 @api_view(['POST'])
 def GenerateQuestion(request):
     print(request.data.get('selections'))
+    
     ans = {}
     ans['questions'] = []
     problem_lst = []
+    coursename = request.data.get('course_name') # course name 가져오기
+    # lectureid = request.data.get('lecture_id') # course name 가져오기
+    keyword = request.data.get('selectedKeywords') # course name 가져오기
+    print(keyword)
+    print(keyword[0])
+    print(coursename)
+    crawl_idx = Sub_dict[coursename]
+    print(crawl_idx)
+    print(crawl_lst)
+    rags = ''
+    for i in keyword:
+        rags += crawl_lst[crawl_idx](i)
+    print(rags)
+    print(len(rags))
+    professor_user_name = request.user.username # professor username 가져오기
+    professor_user_id = request.user.id # professor username 가져오기
     for _ in range(10):
         problem_lst.append('')
     cnt = 0
     for m in range(1,8):
-        for tempt in request.data.get('selections'):
+        for tempt in request.data.get('selections'):    
             if 1 <= Quest_dict[tempt] <= 3 and m == Quest_dict[tempt]:
                 tmp = dict()
                 tmp['type'] = Quest_dict[tempt]
-                a, t = query_view(request,Quest_dict[tempt], request.data.get('selections')[tempt])
+                a, t = query_view(request,Quest_dict[tempt], request.data.get('selections')[tempt], coursename, rags)
                 tmp['items'] = GenerateMultipleProblem(t)
                 tmp['count'] = request.data.get('selections')[tempt]
                 c = request.data.get('selections')[tempt]
@@ -211,7 +234,7 @@ def GenerateQuestion(request):
             elif 4 <= Quest_dict[tempt] <= 6 and m == Quest_dict[tempt]:
                 tmp = dict()
                 tmp['type'] = Quest_dict[tempt]
-                a, t = query_view(request,Quest_dict[tempt], request.data.get('selections')[tempt])
+                a, t = query_view(request,Quest_dict[tempt], request.data.get('selections')[tempt], coursename, rags)
                 tmp['items'] = GenerateWriteProblem(t)
                 tmp['count'] = request.data.get('selections')[tempt]
                 c = request.data.get('selections')[tempt]
@@ -235,11 +258,10 @@ def GenerateQuestion(request):
                 ans['questions'].append(tmp)
                 problem_lst.append(t)
     print(problem_lst)
-    course_name = request.data.get('name') # course name 가져오기
-    professor_user_name = request.user.username # professor username 가져오기
-    professor_user_id = request.user.id # professor username 가져오기
-    lecture = professor_lecture.objects.filter(name=course_name, username=professor_user_name).first()
-    obj = problem(problem_1 = problem_lst[0], problem_2 = problem_lst[1] , problem_3 = problem_lst[2], problem_4 = problem_lst[3], problem_5 = problem_lst[4], problem_6 = problem_lst[5], problem_7 = problem_lst[6], problem_8 = problem_lst[7], problem_9 = problem_lst[8], problem_10 = problem_lst[9], lecture_id = lecture.id, professor_id = professor_user_id)
+    lecture = professor_lecture.objects.filter(course_name=coursename, username=professor_user_name).first()
+    print(lecture)
+    print(professor_user_name)
+    obj = problem(problem_1 = problem_lst[0], problem_2 = problem_lst[1] , problem_3 = problem_lst[2], problem_4 = problem_lst[3], problem_5 = problem_lst[4], problem_6 = problem_lst[5], problem_7 = problem_lst[6], problem_8 = problem_lst[7], problem_9 = problem_lst[8], problem_10 = problem_lst[9], lecture_id = lecture.id , professor_id = professor_user_id)
     obj.save()
     print(ans)
     return Response(ans, status=status.HTTP_200_OK)
@@ -354,3 +376,10 @@ def my_lecture_show(request): # for student
     except:
         print("강의보여지지 않음.")
         return Response({'message':'fail'}, status = 444)
+    
+
+
+
+
+
+

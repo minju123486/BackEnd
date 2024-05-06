@@ -13,3 +13,4 @@ class school(AbstractUser):
     day = models.CharField(max_length=10)
     gender = models.CharField(max_length=10)
     usertype = models.CharField(max_length=10)
+    grade = models.CharField(max_length=10)
