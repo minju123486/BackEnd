@@ -195,9 +195,10 @@ def generate_daily(request):
     blog_content = generate_blog(greeting, tmi, who, what, why, where, when, how, prompt_korean_template)
     if blog_content:
         final_blog_content = f"{greeting}\n\n{blog_content}"
-        print(final_blog_content)
+        lst = list(final_blog_content.split("\n"))
+        print(lst)
         pyperclip.copy(final_blog_content)
-        return Response({'diaryText' : final_blog_content}, status=status.HTTP_200_OK) 
+        return Response({'diaryText' : lst}, status=status.HTTP_200_OK) 
     
     
     
