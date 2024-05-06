@@ -4,9 +4,11 @@ from selenium.webdriver.common.by import By
 import time
 from selenium.common.exceptions import TimeoutException
 options = webdriver.ChromeOptions()
-options.add_argument('headless')
-options.add_argument('window-size=1920x1080')
-options.add_argument("disable-gpu")
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")  # Sandbox 기능 비활성화
+options.add_argument("--disable-dev-shm-usage")  # /dev/shm 파티션 사용 중지
+options.add_argument("--disable-gpu")  # GPU 하드웨어 가속 비활성화
+options.add_argument("--remote-debugging-port=9222")  # 리모트 디버깅 포트 설
 driver = webdriver.Chrome(options=options)
 java_lst = ['https://docs.oracle.com/javase/tutorial/java/nutsandbolts/index.html', 'https://docs.oracle.com/javase/tutorial/java/javaOO/index.html', 
  'https://docs.oracle.com/javase/tutorial/java/IandI/index.html', 'https://docs.oracle.com/javase/tutorial/java/data/index.html']
@@ -67,9 +69,11 @@ def crawling_java(keyword):
             
 def crawling_cpp(keyword):
     options = webdriver.ChromeOptions()
-    options.add_argument('headless')
-    options.add_argument('window-size=1920x1080')
-    options.add_argument("disable-gpu")
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")  # Sandbox 기능 비활성화
+    options.add_argument("--disable-dev-shm-usage")  # /dev/shm 파티션 사용 중지
+    options.add_argument("--disable-gpu")  # GPU 하드웨어 가속 비활성화
+    options.add_argument("--remote-debugging-port=9222")  # 리모트 디버깅 포트 설
     driver = webdriver.Chrome(options=options)
 
     keyword_list = ["토큰 및 문자 집합", "식별자", "숫자-부울 및 포인터 리터럴", "문자열 및 문자 리터럴", "사용자 정의 리터럴", "C++ 형식 시스템", "Lvalue 및 Rvalue", "표준 변환", "기본 제공 형식", "데이터 형식 범위", "선언 및 정의", 
@@ -241,9 +245,11 @@ def crawling_cpp(keyword):
     
 def crawling_python(keyword):
     options = webdriver.ChromeOptions()
-    options.add_argument('headless')
-    options.add_argument('window-size=1920x1080')
-    options.add_argument("disable-gpu")
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")  # Sandbox 기능 비활성화
+    options.add_argument("--disable-dev-shm-usage")  # /dev/shm 파티션 사용 중지
+    options.add_argument("--disable-gpu")  # GPU 하드웨어 가속 비활성화
+    options.add_argument("--remote-debugging-port=9222")  # 리모트 디버깅 포트 설
     driver = webdriver.Chrome(options=options)
 
     driver.get(url="https://docs.python.org/ko/3.11/tutorial/index.html")
