@@ -20,9 +20,9 @@ from django.http import JsonResponse
 from myapp import gpt_prompt
 import openai
 import os
-env = environ.Env()
-environ.Env.read_env(Path(__file__).resolve().parent/'.env')
-openai.api_key = env('Key')
+# env = environ.Env()
+# environ.Env.read_env(Path(__file__).resolve().parent/'.env')
+# openai.api_key = env('Key')
 
 # 인삿말
 def hello(where, tmi):

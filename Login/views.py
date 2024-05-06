@@ -39,7 +39,7 @@ def sign_up(request):
     sign_day = request.data.get('day')
     sign_gender = request.data.get('gender')
     check_usertype = request.data.get('usertype')
-    sign_grade = request.data.get('grade')
+    sign_grade = 1
     instance = school.objects.create_user(username = sign_name_id, password  = sign_password, name = sign_name, studentid  = sign_student_id, email  = sign_e_mail, phone = sign_phone_number, year = sign_year, month = sign_month, day = sign_day, gender = sign_gender, usertype = check_usertype, grade = sign_grade)
     instance.save()
     print(f'{check_usertype} {sign_name_id} 회원가입 하였습니다.')
