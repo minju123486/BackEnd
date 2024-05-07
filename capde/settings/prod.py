@@ -6,7 +6,7 @@ ALLOWED_HOSTS = ['223.130.134.111']
 
 
 
-DEBUG = False
+DEBUG = True
 
 
 
