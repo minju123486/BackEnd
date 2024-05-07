@@ -22,6 +22,7 @@ from .crawling import crawl_lst
 # env = environ.Env()
 # environ.Env.read_env(Path(__file__).resolve().parent/'.env')
 # openai.api_key = env('Key')
+ 
 
 Sub_dict = {"자바프로그래밍" : 1, "C++프로그래밍" : 2, "파이썬프로그래밍" : 3}
 
@@ -260,6 +261,9 @@ def GenerateQuestion(request):
     lecture = professor_lecture.objects.filter(course_name=coursename, username=professor_user_name).first()
     print(lecture)
     print(professor_user_name)
+    tempt_problem = problem.objects.filter(lecture_id = lecture.id, professor_id = professor_user_id)
+    if tempt_problem.exists():
+        tempt_problem.delete()
     obj = problem(problem_1 = problem_lst[0], problem_2 = problem_lst[1] , problem_3 = problem_lst[2], problem_4 = problem_lst[3], problem_5 = problem_lst[4], problem_6 = problem_lst[5], problem_7 = problem_lst[6], problem_8 = problem_lst[7], problem_9 = problem_lst[8], problem_10 = problem_lst[9], lecture_id = lecture.id , professor_id = professor_user_id)
     obj.save()
     print(ans)
@@ -364,11 +368,16 @@ def my_lecture_show(request): # for student
         rtr = dict()
         rtr['lecture'] = []
         for i in obj:
+            check = 0
             tmp = professor_lecture.objects.filter(id = i.lecture_id).first()
+            tempt = problem.objects.filter(lecture_id = tmp.lecture_id, professor_id = tmp.id)
+            if tempt.exists():
+                check = 1
             tempt = dict()
             tempt['course'] = i.course_name
             tempt['professor'] = tmp.name
             tempt['lecture_id'] = i.lecture_id
+            tempt['check'] = check
             rtr['lecture'].append(tempt)
         print(rtr)
         return Response(rtr, status = 200)

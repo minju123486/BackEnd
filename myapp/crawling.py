@@ -8,7 +8,6 @@ options.add_argument("--headless")
 options.add_argument("--no-sandbox")  # Sandbox 기능 비활성화
 options.add_argument("--disable-dev-shm-usage")  # /dev/shm 파티션 사용 중지
 options.add_argument("--disable-gpu")  # GPU 하드웨어 가속 비활성화
-options.add_argument("--remote-debugging-port=9222")  # 리모트 디버깅 포트 설
 driver = webdriver.Chrome(options=options)
 java_lst = ['https://docs.oracle.com/javase/tutorial/java/nutsandbolts/index.html', 'https://docs.oracle.com/javase/tutorial/java/javaOO/index.html', 
  'https://docs.oracle.com/javase/tutorial/java/IandI/index.html', 'https://docs.oracle.com/javase/tutorial/java/data/index.html']
