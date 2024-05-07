@@ -9,7 +9,7 @@ import environ
 import pyperclip
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from tkinter import Tk, messagebox
+# from tkinter import Tk, messagebox
 
 
 user_data = dict()
