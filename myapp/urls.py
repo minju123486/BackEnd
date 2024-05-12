@@ -25,5 +25,8 @@ urlpatterns = [
     path('lecture_show/', views.lecture_show),
     path('lecture_view/', views.lecture_view),
     path('lecture_apply/', views.lecture_apply),
-    path('my_lecture_show/', views.my_lecture_show)
+    path('my_lecture_show/', views.my_lecture_show),
+    path('problem_save/', views.problem_save),
+    path('student_problem/', views.student_problem),
 ]
+

@@ -20,10 +20,9 @@ from django.http import JsonResponse
 from myapp import gpt_prompt
 import openai
 import os
-env = environ.Env()
-environ.Env.read_env(Path(__file__).resolve().parent/'.env')
-openai.api_key = env('Key')
-
+# env = environ.Env()
+# environ.Env.read_env(Path(__file__).resolve().parent/'.env')
+# openai.api_key = env('Key')
 # 인삿말
 def hello(where, tmi):
     model_engine = "gpt-3.5-turbo" # 장소 fine-tuning 3.5 turbo model  ft:gpt-3.5-turbo-0125:personal::9JO9ePp4
