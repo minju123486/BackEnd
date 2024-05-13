@@ -23,7 +23,7 @@ from .crawling import crawl_lst
 # env = environ.Env()
 # environ.Env.read_env(Path(__file__).resolve().parent/'.env')
 # openai.api_key = env('Key')
- 
+
 Sub_dict = {"자바프로그래밍" : 1, "C++프로그래밍" : 2, "파이썬프로그래밍" : 3}
 
 
@@ -52,6 +52,25 @@ def query_view(request,numberKey, count, subject, rags):
     prompt=str(prompt)
     response = get_completion(prompt, numberKey,count, subject, rags)
     return JsonResponse({'response': response}), response 
+
+def get_completion_feedback(prompt):     
+    query = openai.ChatCompletion.create( 
+       model="gpt-4-turbo",
+       messages=[{"role": "system", "content": gpt_prompt.sys_feedback}, {'role':'user','content': prompt}], 
+       max_tokens=1024, 
+       n=1,
+       stop=None,
+       temperature=0.5, 
+    ) 
+    response = query.choices[0].message["content"]
+    print(response)
+    return response
+
+def query_view_feedback(request, prompt):  
+    prompt=str(prompt)
+    response = get_completion_feedback(prompt)
+    return JsonResponse({'response': response}), response 
+
 
 def GenerateWriteProblem(tmp):
     lst = list(tmp.split("\n"))
@@ -114,7 +133,7 @@ def GenerateMultipleProblem(tmp):
                 tempt['content'] = b
                 tempt['options'] = []
         elif len(i) > 0 and i[0]!= '-' and i[0] != ' ' and i[0:2] != '정답' and i[0:2] != '정닱'  and 1 <= int(i[0]) <= 4:
-            b = i[4:]
+            b = f'{i[0]}번 : {i[4:]}'
             tempt['options'].append(b)
         elif i[0:2] == '정답' or i[0:2] == '정닱':
             tt = ''
@@ -358,29 +377,67 @@ def student_problem(request):
 def student_answer(request):
     coursename = request.data.get('course_name')
     professor_name = request.data.get('course_professor')
-    l_answer_1 = request.data.get('problem_1')
-    l_answer_2 = request.data.get('problem_2')
-    l_answer_3 = request.data.get('problem_3')
-    l_answer_4 = request.data.get('problem_4')
-    l_answer_5 = request.data.get('problem_5')
-    l_answer_6 = request.data.get('problem_6')
-    l_answer_7 = request.data.get('problem_7')
-    l_answer_8 = request.data.get('problem_8')
-    l_answer_9 = request.data.get('problem_9')
-    l_answer_10 = request.data.get('problem_10')
+    l_answer_1 = request.data.get('answers')['answer1']
+    l_answer_2 = request.data.get('answers')['answer2']
+    l_answer_3 = request.data.get('answers')['answer3']
+    l_answer_4 = request.data.get('answers')['answer4']
+    l_answer_5 = request.data.get('answers')['answer5']
+    l_answer_6 = request.data.get('answers')['answer6']
+    l_answer_7 = request.data.get('answers')['answer7']
+    l_answer_8 = request.data.get('answers')['answer8']
+    l_answer_9 = request.data.get('answers')['answer9']
+    l_answer_10 = request.data.get('answers')['answer10']
     l_answer_lst = [l_answer_1,l_answer_2,l_answer_3,l_answer_4,l_answer_5,l_answer_6,l_answer_7,l_answer_8,l_answer_9,l_answer_10]
-    while l_answer_lst[len(answer)-1] == '':
+    print(l_answer_lst)
+    while l_answer_lst[len(l_answer_lst)-1] == '':
         l_answer_lst.pop()
+    print(l_answer_lst)
     obj = professor_lecture.objects.filter(username = professor_name, course_name = coursename).first()
-    
+    tmp = answer.objects.filter(lecture_id = obj.id , student_id = request.user.id)
+    if tmp.exists():
+        tmp.delete()
     tempt = answer(answer_1 = l_answer_1, answer_2 = l_answer_2 , answer_3 = l_answer_3, answer_4 = l_answer_4, answer_5 = l_answer_5, answer_6 = l_answer_6, answer_7 = l_answer_7, answer_8 = l_answer_8, answer_9 = l_answer_9, answer_10 = l_answer_10, lecture_id = obj.id , student_id = request.user.id)
     tempt.save()
     return Response({'message':'success'}, status = 200)
     
                
-                    
-                    
-                    
+@api_view(['POST'])   
+def feedback(request): # for professor
+    lecture__id = request.data.get('lecture_id')
+    
+    pl = problem.objects.filter(lecture_id = lecture__id).first()
+    
+    full_query = ''
+    
+    problem_lst = [pl.problem_1,pl.problem_2,pl.problem_3,pl.problem_4,pl.problem_5,pl.problem_6,pl.problem_7,pl.problem_8,pl.problem_9,pl.problem_10]
+    while problem_lst[len(problem_lst)-1]:
+        problem_lst.pop()
+    for idx, pro in enumerate(problem_lst):
+        lst = list(pro.split("$$"))
+        if int(lst[0]) == 1 or int(lst[0]) == 2 or int(lst[0]) == 3:
+            full_query += f'{idx+1} 번 문제\n{lst[1]} \n {lst[2]} \n {lst[3]} \n {lst[4]} \n {lst[5]} \n 정답 : {lst[6]}'
+        elif int(lst[0]) == 4 or int(lst[0]) == 5 or int(lst[0]) == 6:
+            full_query += f'{idx+1} 번 문제\n{lst[1]} \n 정답 : {lst[2]}'    
+    obj = answer.objects.filter(lecture_id = lecture__id)
+    
+
+    for tempt in obj:
+        print(tempt)
+        answer_lst = [obj.answer_1,obj.answer_2,obj.answer_3,obj.answer_4,obj.answer_5,obj.answer_6,obj.answer_7,obj.answer_8,obj.answer_9,obj.answer_10]
+        while answer_lst[len(answer_lst)-1] == '':
+            answer_lst.pop()
+        tmp = '\n\n'
+        for idx,ans in enumerate(answer_lst):
+            tmp += f'{idx+1} 번 답 : {ans} \n'
+        tmp += '\n\n'
+        full_query += tmp
+    t, answer_1 = query_view_feedback(request, full_query)        
+    return Response({'message': answer_1}, status = 200)              
+
+
+@api_view(['POST'])
+def mock_feedback(request):
+    return Response({'date':['2024.05.12', '2024.05.31', '2024.05.14' ]}, status = 200)               
                     
                     
             
@@ -507,6 +564,7 @@ def my_lecture_show(request): # for student
     print(rtr)
     return Response(rtr, status = 200)
     # return Response({'message':'fail'}, status = 444)/
+    
     
 
 
