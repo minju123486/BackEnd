@@ -55,7 +55,7 @@ def query_view(request,numberKey, count, subject, rags):
 
 def get_completion_feedback(prompt):     
     query = openai.ChatCompletion.create( 
-       model="gpt-4-turbo",
+       model="gpt-4",
        messages=[{"role": "system", "content": gpt_prompt.sys_feedback}, {'role':'user','content': prompt}], 
        max_tokens=1024, 
        n=1,
@@ -403,36 +403,64 @@ def student_answer(request):
                
 @api_view(['POST'])   
 def feedback(request): # for professor
-    lecture__id = request.data.get('lecture_id')
+    lecture__id = 2
+#    lecture__id = request.data.get('lecture_id') 
     
     pl = problem.objects.filter(lecture_id = lecture__id).first()
     
     full_query = ''
     
     problem_lst = [pl.problem_1,pl.problem_2,pl.problem_3,pl.problem_4,pl.problem_5,pl.problem_6,pl.problem_7,pl.problem_8,pl.problem_9,pl.problem_10]
-    while problem_lst[len(problem_lst)-1]:
+    while problem_lst[len(problem_lst)-1] == '':
         problem_lst.pop()
+    count = len(problem_lst)
     for idx, pro in enumerate(problem_lst):
         lst = list(pro.split("$$"))
         if int(lst[0]) == 1 or int(lst[0]) == 2 or int(lst[0]) == 3:
-            full_query += f'{idx+1} 번 문제\n{lst[1]} \n {lst[2]} \n {lst[3]} \n {lst[4]} \n {lst[5]} \n 정답 : {lst[6]}'
+            full_query += f'{idx+1} 번 문제\n{lst[1]} \n {lst[2]} \n {lst[3]} \n {lst[4]} \n {lst[5]} \n 정답 : {lst[6]} \n'
         elif int(lst[0]) == 4 or int(lst[0]) == 5 or int(lst[0]) == 6:
-            full_query += f'{idx+1} 번 문제\n{lst[1]} \n 정답 : {lst[2]}'    
+            full_query += f'{idx+1} 번 문제\n{lst[1]} \n 정답 : {lst[2]} \n'    
     obj = answer.objects.filter(lecture_id = lecture__id)
     
-
-    for tempt in obj:
+    full_query += '''\n 문제들은 다음과 같고 이제 학생들의 답안을 알려줄게 답안을 전부 종합해서 피드백을 해줘. 단 출력에는 규칙이 있고 이 규칙들을 반드시 지켜야해.
+                    네 알겠습니다 같은 답변은 전부 뺴고 필요한 답변만 해줘.
+                    일단 시작은 각 문제별로 몇 명이 맞았는지 알려줘. 양식은 다음과 같이 알려줘.
+                    문제번호. (맞춘 사람 수) 문제번호랑 맞춘 사람 수는 번, 명 표시할 필요없이 숫자만 넣어줘.
+                    위와 같은 양식으로 모든 문제에 대해서 출력하고 그 밑에는 학생들의 이해도에 대한 피드백을 작성해줘.
+                    학생들의 수업내용에 관한 이해를 체크하기 위해 낸 문제들이고 답안을 종합해서 어디 부분에 이해가 부족하고 어디 부분은 이해가 잘 되어있다는 피드백이면 돼.
+                    대학교 학부 1~2학년 학생들이 처음 배우는 상황이기 때문에 애매모호하게 어느정도만 이해했다고 판단되는 경우에는 맞았다고 판단해줘.
+                    학생들 개개인에 대한 피드백은 해 줄 필요없고 전체적으로 종합한 다음에 피드백 해줘.
+                    문제별로 피드백하거나 비슷한 내용을 묶어서 피드백해줘. 최소 석사학위 이상을 가진 전문가가 본다는 가정하에 자세하게 피드백해줘.
+                    '피드백 :' 같은 키워드 없이 그냥 피드백 내용만 작성해줘. 
+                    '''
+    for idx, tempt in enumerate(obj):
         print(tempt)
-        answer_lst = [obj.answer_1,obj.answer_2,obj.answer_3,obj.answer_4,obj.answer_5,obj.answer_6,obj.answer_7,obj.answer_8,obj.answer_9,obj.answer_10]
+        answer_lst = [tempt.answer_1,tempt.answer_2,tempt.answer_3,tempt.answer_4,tempt.answer_5,tempt.answer_6,tempt.answer_7,tempt.answer_8,tempt.answer_9,tempt.answer_10]
         while answer_lst[len(answer_lst)-1] == '':
             answer_lst.pop()
-        tmp = '\n\n'
+        tmp = f'{idx+1}번 학생 답안 \n\n'
         for idx,ans in enumerate(answer_lst):
-            tmp += f'{idx+1} 번 답 : {ans} \n'
+            tmp += f'{idx+1} 번 문제 답안 : {ans} \n'
         tmp += '\n\n'
         full_query += tmp
-    t, answer_1 = query_view_feedback(request, full_query)        
-    return Response({'message': answer_1}, status = 200)              
+    print(full_query)
+    t, answer_1 = query_view_feedback(request, full_query)
+    rtr = {}
+    rtr_lst = list(answer_1.split("\n"))
+    feed_tempt = ''
+    for k in rtr_lst:
+        print(k)
+        if len(k) >= 3 and len(k) <= 5:
+            a,b = k.split(". ")
+            rtr[a] = int(b)
+        else:
+            feed_tempt += k
+    rtr['feedback'] = feed_tempt
+    rtr['count'] = count
+    print(rtr)
+               
+    # print(answer_1)
+    return Response(rtr, status = 200)              
 
 
 @api_view(['POST'])

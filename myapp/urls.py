@@ -28,6 +28,7 @@ urlpatterns = [
     path('my_lecture_show/', views.my_lecture_show),
     path('problem_save/', views.problem_save),
     path('student_problem/', views.student_problem),
-    path('student_answer/', views.student_answer)
+    path('student_answer/', views.student_answer),
+    path('feedback/', views.feedback)
 ]
 
