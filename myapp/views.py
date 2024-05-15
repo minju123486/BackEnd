@@ -433,6 +433,7 @@ def feedback(request): # for professor
                     문제별로 피드백하거나 비슷한 내용을 묶어서 피드백해줘. 최소 석사학위 이상을 가진 전문가가 본다는 가정하에 자세하게 피드백해줘.
                     '피드백 :' 같은 키워드 없이 그냥 피드백 내용만 작성해줘. 
                     '''
+    cnt = len(obj)
     for idx, tempt in enumerate(obj):
         print(tempt)
         answer_lst = [tempt.answer_1,tempt.answer_2,tempt.answer_3,tempt.answer_4,tempt.answer_5,tempt.answer_6,tempt.answer_7,tempt.answer_8,tempt.answer_9,tempt.answer_10]
@@ -457,6 +458,7 @@ def feedback(request): # for professor
             feed_tempt += k
     rtr['feedback'] = feed_tempt
     rtr['count'] = count
+    rtr['cnt'] = cnt
     print(rtr)
                
     # print(answer_1)
