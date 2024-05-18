@@ -68,8 +68,11 @@ def like__check(username, post__id):
 @api_view(['POST'])
 def content_view(request):
     post__id = request.data.get('id')
+    print(post__id)
     user_name = request.user.username
-    tempt = post.object.get(id = post__id)
+    print(3)
+    tempt = post.objects.get(id = post__id)
+    print(4)
     rtr = {}
     rtr['content'] = tempt.content
     rtr['title'] = tempt.title
@@ -86,28 +89,25 @@ def content_view(request):
     tempt_comment = comment.objects.filter(post_id = post__id)
     for tmp in tempt_comment:
         rtr['comment'].append({'content' : tmp.content, 'author' : tmp.author,'year':tmp.year,'month':tmp.month,'day':tmp.day,'hour':tmp.hour,'minute':tmp.minute})
-    return rtr
+    return Response(rtr, status = 200)
 
 
 @api_view(['POST'])
 def post_view(request):
     rtr = {}
-    rtr['free'] = []
-    rtr['popular'] = []
-    tempt1 = {'id' : 1,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
-    tempt2 = {'id' : 2,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
-    tempt3 = {'id' : 3,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
-    tempt4 = {'id' : 4,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
-    tempt5 = {'id' : 5,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
-    tempt6 = {'id' : 6,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
-    tempt7 = {'id' : 7,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
-    tempt8 = {'id' : 8,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
-    rtr['free'].append(tempt1)
-    rtr['free'].append(tempt2)
-    rtr['free'].append(tempt5)
-    rtr['free'].append(tempt6)
-    rtr['popular'].append(tempt3)
-    rtr['popular'].append(tempt4)
-    rtr['popular'].append(tempt7)
-    rtr['popular'].append(tempt8)
+    lst = []
+    all_posts = post.objects.all()
+    for tmp in all_posts:
+        lst.append({'id':tmp.id,'title' : tmp.title, 'author' : tmp.author, 'content':tmp.content, 'year':tmp.year, 'month':tmp.month, 'day':tmp.day,'hour':tmp.hour,'minute':tmp.minute, 'watch':tmp.watch, 'like':tmp.like, 'comment_number':tmp.comment_number})
+    sorted_data_Byfree = sorted(lst, key=lambda x: (x['year'], x['month'], x['day'], x['hour'], x['minute']), reverse=True)
+    sorted_data_Bywatch = sorted(lst, key=lambda x: (x['watch']), reverse=True)
+    while len(sorted_data_Byfree) > 10:
+        sorted_data_Byfree.pop()
+    while len(sorted_data_Bywatch) > 4:
+        sorted_data_Bywatch.pop()
+    rtr['free'] = sorted_data_Byfree
+    rtr['popular'] = sorted_data_Bywatch
+    print(rtr['free'])
+    print(rtr['popular'])
+
     return Response(rtr, status = 200)
