@@ -21,5 +21,6 @@ urlpatterns = [
     path('post_create/', views.post_create),
     path('post_like/', views.post_like),
     path('post_dislike/', views.post_dislike),
-    path('content_view/', views.content_view)
+    path('content_view/', views.content_view),
+    path('post_view/', views.post_view)
 ]

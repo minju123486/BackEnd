@@ -90,7 +90,7 @@ def content_view(request):
 
 
 @api_view(['POST'])
-def content_view(request):
+def post_view(request):
     rtr = {}
     rtr['free'] = []
     rtr['popular'] = []
