@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'Login',
     'myapp',
     'daily',
+    'community',
 ]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

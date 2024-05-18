@@ -404,7 +404,12 @@ def student_answer(request):
 @api_view(['POST'])   
 def feedback(request): # for professor
     lecture__id = 2
-#    lecture__id = request.data.get('lecture_id') 
+    professor_name = request.data.get('professor_name')
+    course_name = request.data.get('course_name')
+    
+    lecture_tempt = professor_lecture.objects.filter(username = professor_name, course_name = course_name)
+    
+    lecture__id = lecture_tempt.id 
     
     pl = problem.objects.filter(lecture_id = lecture__id).first()
     
