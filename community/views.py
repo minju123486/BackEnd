@@ -19,7 +19,7 @@ import os
 from myapp.models import course, professor_lecture, student_lecture, problem, answer
 from Login.models import school
 from datetime import datetime
-from .models import post, comment
+from .models import post, comment, like_check
 
 @api_view(['POST'])   
 def post_create(request): # for professor
@@ -58,24 +58,56 @@ def post_dislike(request): # for professor
     post.save()
     return Response({'message':'success'}, status = 200)
 
+def like__check(username, post__id):
+    try:
+        tempt = like_check.objects.get(user_name = username, post_id = post__id)
+        return 0
+    except:
+        return 1
 
 @api_view(['POST'])
 def content_view(request):
     post__id = request.data.get('id')
+    user_name = request.user.username
     tempt = post.object.get(id = post__id)
     rtr = {}
-    rtr['content'] = 'content'
-    rtr['title'] = 'content'
-    rtr['author'] = 'content'
-    rtr['watch'] = 4
-    rtr['year'] = 2024
-    rtr['month'] = 11
-    rtr['like'] = 1
-    rtr['like_check'] = 0
-    rtr['day'] = 24
-    rtr['hour'] = 17
-    rtr['minute'] = 17
+    rtr['content'] = tempt.content
+    rtr['title'] = tempt.title
+    rtr['author'] = tempt.author
+    rtr['watch'] = tempt.watch
+    rtr['year'] = tempt.year
+    rtr['month'] = tempt.month
+    rtr['like'] = tempt.like
+    rtr['like_check'] = like__check(user_name, post__id)
+    rtr['day'] = tempt.day
+    rtr['hour'] = tempt.hour
+    rtr['minute'] = tempt.minute
     rtr['comment'] = []
-    rtr['comment'].append({'content' : 'content', 'author' : 'author','year':2024,'month':5,'day':18,'hour':17,'minute':52})
-    rtr['comment'].append({'content' : 'content', 'author' : 'author','year':2024,'month':5,'day':18,'hour':17,'minute':52})
+    tempt_comment = comment.objects.filter(post_id = post__id)
+    for tmp in tempt_comment:
+        rtr['comment'].append({'content' : tmp.content, 'author' : tmp.author,'year':tmp.year,'month':tmp.month,'day':tmp.day,'hour':tmp.hour,'minute':tmp.minute})
     return rtr
+
+
+@api_view(['POST'])
+def content_view(request):
+    rtr = {}
+    rtr['free'] = []
+    rtr['popular'] = []
+    tempt1 = {'id' : 1,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
+    tempt2 = {'id' : 2,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
+    tempt3 = {'id' : 3,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
+    tempt4 = {'id' : 4,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
+    tempt5 = {'id' : 5,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
+    tempt6 = {'id' : 6,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
+    tempt7 = {'id' : 7,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
+    tempt8 = {'id' : 8,'author' : 'minju','title' : 'sibal','watch' : 10,'year' : 2024,'month' : 5,'day' : 34, 'comment_number' : 3, 'content' : "WHOWWO"}
+    rtr['free'].append(tempt1)
+    rtr['free'].append(tempt2)
+    rtr['free'].append(tempt5)
+    rtr['free'].append(tempt6)
+    rtr['popular'].append(tempt3)
+    rtr['popular'].append(tempt4)
+    rtr['popular'].append(tempt7)
+    rtr['popular'].append(tempt8)
+    return Response(rtr, status = 200)

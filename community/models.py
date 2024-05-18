@@ -23,3 +23,7 @@ class comment(models.Model):
     day = models.IntegerField()
     hour = models.IntegerField()
     minute = models.IntegerField()
+    
+class like_check(models.Model):
+    user_name = models.CharField(max_length=50)
+    post_id = models.CharField(max_length=50)
