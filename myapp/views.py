@@ -16,10 +16,10 @@ from django.http import JsonResponse
 from myapp import gpt_prompt
 import openai
 import os
-from .models import course, professor_lecture, student_lecture, problem, answer
+from .models import course, professor_lecture, student_lecture, problem, answer, feedback_list
 from Login.models import school
 from .crawling import crawl_lst
-
+from datetime import datetime
 # env = environ.Env()
 # environ.Env.read_env(Path(__file__).resolve().parent/'.env')
 # openai.api_key = env('Key')
@@ -372,6 +372,54 @@ def student_problem(request):
     print(rtr)
     return Response(rtr, status=status.HTTP_200_OK)
                 
+                
+@api_view(['POST'])
+def feedback_problem(request):
+    print(request.data)
+    coursename = request.data.get('course_name')
+    professor_name = request.data.get('course_professor')
+    obj = school.objects.filter(username = professor_name).first()
+    professor_id = obj.id
+    lecture = professor_lecture.objects.filter(username = professor_name, course_name = coursename).first()
+    lecture__id = lecture.id
+    tempt_problem = problem.objects.filter(lecture_id = lecture__id, professor_id = professor_id).first()
+    problem_lst = [tempt_problem.problem_1, tempt_problem.problem_2, tempt_problem.problem_3, tempt_problem.problem_4, tempt_problem.problem_5, 
+                   tempt_problem.problem_6, tempt_problem.problem_7, tempt_problem.problem_8 ,tempt_problem.problem_9 ,tempt_problem.problem_10]
+    while problem_lst[len(problem_lst)-1] == '':
+        problem_lst.pop()
+    rtr = {'questions':[]}
+    dic = dict()
+    for i in problem_lst:
+        dic[i[0]] = 1
+    print(dic)
+    for m in dic:
+        tempt = {}
+        tempt['type'] = int(m)
+        tempt['items'] = []
+        check = 0
+        for k in problem_lst:
+            if int(k[0]) != int(m):
+                continue
+            check = 1
+            tempt['count'] = int(k[len(k)-1])
+            lst = list(k.split("$$"))
+            tmp = {}
+            if lst[0] == '1' or lst[0] == '2' or lst[0] == '3':
+                tmp['content'] = lst[1]
+                tmp['options'] = []
+                tmp['options'].append(lst[2])
+                tmp['options'].append(lst[3])
+                tmp['options'].append(lst[4])
+                tmp['options'].append(lst[5])
+                tmp['answer'] = lst[6]
+            elif lst[0] == '4' or lst[0] == '5' or  lst[0] == '6':
+                tmp['content'] = lst[1]
+                tmp['answer'] = lst[2]
+            tempt['items'].append(tmp)
+        if check == 1:
+            rtr['questions'].append(tempt)
+    print(rtr)
+    return Response(rtr, status=status.HTTP_200_OK)
         
 @api_view(['POST'])
 def student_answer(request):
@@ -400,14 +448,47 @@ def student_answer(request):
     tempt.save()
     return Response({'message':'success'}, status = 200)
     
-               
-@api_view(['POST'])   
-def feedback(request): # for professor
-    lecture__id = 2
+@api_view(['POST'])
+def problem_check(request):
     professor_name = request.data.get('professor_name')
     course_name = request.data.get('course_name')
+    lecture_tempt = professor_lecture.objects.filter(username = professor_name, course_name = course_name).first()
+    lecture__id = lecture_tempt.id
+    try:
+        pl = problem.objects.get(lecture_id = lecture__id).first()
+        return Response({'check':1}, status=status.HTTP_200_OK)
+    except:
+        return Response({'check':0}, status=status.HTTP_200_OK)
+        
+@api_view(['POST'])   
+def feedback_save(request): # for professor
+    professor_name = 'q'
+    course_name = '자바프로그래밍'
+    lecture_tempt = professor_lecture.objects.filter(username = professor_name, course_name = course_name).first()
+    print(lecture_tempt.course_name)
+    lecture__id = lecture_tempt.id
+    pl = problem.objects.filter(lecture_id = lecture__id).first()
+    problem_lst = [pl.problem_1,pl.problem_2,pl.problem_3,pl.problem_4,pl.problem_5,pl.problem_6,pl.problem_7,pl.problem_8,pl.problem_9,pl.problem_10]
+    now = datetime.now()
+
+
+    n_year = now.year
+    n_month = now.month
+    n_day = now.day
     
-    lecture_tempt = professor_lecture.objects.filter(username = professor_name, course_name = course_name)
+    lst, feed_tempt, count, cnt = feedback(request)
+    
+    tempt = feedback_list(username = professor_name, coursename = course_name, feedback = feed_tempt, year = n_year, month = n_month, day = n_day, count = count, cnt = cnt, correct_count = lst, problem_1 = problem_lst[0], problem_2 = problem_lst[1], problem_3 = problem_lst[2], problem_4 = problem_lst[3], problem_5 = problem_lst[4], problem_6 = problem_lst[5], problem_7 = problem_lst[6], problem_8 = problem_lst[7],problem_9 = problem_lst[8],problem_10 = problem_lst[9])
+    tempt.save()
+    
+    return Response({'message':'success'}, status=status.HTTP_200_OK)
+          
+def feedback(request): # for professor
+    lecture__id = 2
+    professor_name = 'q'
+    course_name = '자바프로그래밍'
+    
+    lecture_tempt = professor_lecture.objects.filter(username = professor_name, course_name = course_name).first()
     
     lecture__id = lecture_tempt.id 
     
@@ -454,11 +535,12 @@ def feedback(request): # for professor
     rtr = {}
     rtr_lst = list(answer_1.split("\n"))
     feed_tempt = ''
+    lst = ''
     for k in rtr_lst:
         print(k)
         if len(k) >= 3 and len(k) <= 5:
             a,b = k.split(". ")
-            rtr[a] = int(b)
+            lst += str(b)+' '
         else:
             feed_tempt += k
     rtr['feedback'] = feed_tempt
@@ -467,7 +549,7 @@ def feedback(request): # for professor
     print(rtr)
                
     # print(answer_1)
-    return Response(rtr, status = 200)              
+    return lst, feed_tempt, count, cnt             
 
 
 @api_view(['POST'])
@@ -513,7 +595,13 @@ def lecture_show(request): ## my 강의
         rtr = dict()
         rtr['lecture'] = []
         for k in lecture:
-            rtr['lecture'].append({'name':k.course_name, 'key':k.course_id})
+            check = 0
+            lecture__id = k.id
+            tempt = problem.objects.filter(lecture_id = lecture__id)
+            print("tempt", tempt)
+            if tempt.exists():
+                check = 1
+            rtr['lecture'].append({'name':k.course_name, 'key':k.course_id, 'check':check})
         print(rtr)
         return Response(rtr, status = 200)
     else:
