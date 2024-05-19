@@ -459,11 +459,79 @@ def problem_check(request):
         return Response({'check':1}, status=status.HTTP_200_OK)
     except:
         return Response({'check':0}, status=status.HTTP_200_OK)
-        
+    
+@api_view(['POST'])   
+def feedback(request): # for professor
+    idx = request.data.get('id')
+    lecture_tempt = feedback_list.objects.filter(id = idx).first()
+    rtr = {}
+    lst = list(lecture_tempt.correct_count.split(" "))
+    for i in range(1,len(lst)+1):
+        rtr[str(i)] = lst[i-1]
+    rtr['count'] = lecture_tempt.count
+    rtr['cnt'] = lecture_tempt.cnt
+    rtr['feedback'] = lecture_tempt.feedback
+    problem_lst = [lecture_tempt.problem_1, lecture_tempt.problem_2, lecture_tempt.problem_3, lecture_tempt.problem_4, lecture_tempt.problem_5, 
+                lecture_tempt.problem_6, lecture_tempt.problem_7, lecture_tempt.problem_8 ,lecture_tempt.problem_9 ,lecture_tempt.problem_10]
+    while problem_lst[len(problem_lst)-1] == '':
+        problem_lst.pop()
+    rtr['questions'] = []
+    dic = dict()
+    for i in problem_lst:
+        dic[i[0]] = 1
+    print(dic)
+    for m in dic:
+        tempt = {}
+        tempt['type'] = int(m)
+        tempt['items'] = []
+        check = 0
+        for k in problem_lst:
+            if int(k[0]) != int(m):
+                continue
+            check = 1
+            tempt['count'] = int(k[len(k)-1])
+            lst = list(k.split("$$"))
+            tmp = {}
+            if lst[0] == '1' or lst[0] == '2' or lst[0] == '3':
+                tmp['content'] = lst[1]
+                tmp['options'] = []
+                tmp['options'].append(lst[2])
+                tmp['options'].append(lst[3])
+                tmp['options'].append(lst[4])
+                tmp['options'].append(lst[5])
+                tmp['answer'] = lst[6]
+            elif lst[0] == '4' or lst[0] == '5' or  lst[0] == '6':
+                tmp['content'] = lst[1]
+                tmp['answer'] = lst[2]
+            tempt['items'].append(tmp)
+        if check == 1:
+            rtr['questions'].append(tempt)
+    print(rtr)
+    return Response(rtr, status=status.HTTP_200_OK)
+
+@api_view(['POST'])   
+def feedback_view(request): # for professor
+    professor_name = request.data.get('course_professor')
+    course_name = request.data.get('course_name')
+    print(professor_name)
+    print(course_name)
+    feedback_tempt = feedback_list.objects.filter(username = professor_name, coursename = course_name)
+    rtr = {}
+    rtr['date'] = []
+    rtr['id'] = []
+    for k in feedback_tempt:
+        tempt = {}
+        dat = f'{k.year}.{k.month}.{k.day}.'
+        rtr['date'].append(dat)
+        rtr['id'].append(k.id)
+    print(rtr)
+    return Response(rtr, status=status.HTTP_200_OK)
+
+
 @api_view(['POST'])   
 def feedback_save(request): # for professor
-    professor_name = 'q'
-    course_name = '자바프로그래밍'
+    professor_name = request.data.get('professor_name')
+    course_name = request.data.get('course_name')
     lecture_tempt = professor_lecture.objects.filter(username = professor_name, course_name = course_name).first()
     print(lecture_tempt.course_name)
     lecture__id = lecture_tempt.id
@@ -476,17 +544,18 @@ def feedback_save(request): # for professor
     n_month = now.month
     n_day = now.day
     
-    lst, feed_tempt, count, cnt = feedback(request)
+    lst, feed_tempt, count, cnt = feed(request)
     
     tempt = feedback_list(username = professor_name, coursename = course_name, feedback = feed_tempt, year = n_year, month = n_month, day = n_day, count = count, cnt = cnt, correct_count = lst, problem_1 = problem_lst[0], problem_2 = problem_lst[1], problem_3 = problem_lst[2], problem_4 = problem_lst[3], problem_5 = problem_lst[4], problem_6 = problem_lst[5], problem_7 = problem_lst[6], problem_8 = problem_lst[7],problem_9 = problem_lst[8],problem_10 = problem_lst[9])
     tempt.save()
-    
+    problem.objects.filter(lecture_id = lecture__id).delete()
+    answer.objects.filter(lecture_id = lecture__id).delete()
     return Response({'message':'success'}, status=status.HTTP_200_OK)
-          
-def feedback(request): # for professor
+
+def feed(request): # for professor
     lecture__id = 2
-    professor_name = 'q'
-    course_name = '자바프로그래밍'
+    professor_name = request.data.get('professor_name')
+    course_name = request.data.get('course_name')
     
     lecture_tempt = professor_lecture.objects.filter(username = professor_name, course_name = course_name).first()
     
@@ -599,9 +668,11 @@ def lecture_show(request): ## my 강의
             lecture__id = k.id
             tempt = problem.objects.filter(lecture_id = lecture__id)
             print("tempt", tempt)
+            student_lec = student_lecture.objects.filter(lecture_id = lecture__id)
+            answer_lec = answer.objects.filter(lecture_id = lecture__id)
             if tempt.exists():
                 check = 1
-            rtr['lecture'].append({'name':k.course_name, 'key':k.course_id, 'check':check})
+            rtr['lecture'].append({'name':k.course_name, 'key':k.course_id, 'check':check,'count': len(student_lec),'student_count': len(answer_lec) })
         print(rtr)
         return Response(rtr, status = 200)
     else:

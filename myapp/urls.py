@@ -29,6 +29,9 @@ urlpatterns = [
     path('problem_save/', views.problem_save),
     path('student_problem/', views.student_problem),
     path('student_answer/', views.student_answer),
-    path('feedback_save/', views.feedback_save)
+    path('feedback_save/', views.feedback_save),
+    path('problem_check/', views.problem_check),
+    path('feedback_view/', views.feedback_view),
+    path('feedback/', views.feedback),
 ]
 
