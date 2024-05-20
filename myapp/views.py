@@ -20,19 +20,20 @@ from .models import course, professor_lecture, student_lecture, problem, answer,
 from Login.models import school
 from .crawling import crawl_lst
 from datetime import datetime
-env = environ.Env()
-environ.Env.read_env(Path(__file__).resolve().parent/'.env')
-openai.api_key = env('Key')
+# env = environ.Env()
+# environ.Env.read_env(Path(__file__).resolve().parent/'.env')
+# openai.api_key = env('Key')
+
 Sub_dict = {"자바프로그래밍" : 1, "C++프로그래밍" : 2, "파이썬프로그래밍" : 3}
 
 
 Quest_dict = {'객관식-빈칸': 1, '객관식-단답형': 2, '객관식-문장형': 3, '단답형-빈칸': 4, '단답형-문장형': 5, 'OX선택형-O/X': 6, '서술형-코딩': 7}
 history = []
-def get_completion(prompt, numberKey,count, subject, rags):     
-    history.append({'role':'user','content':gpt_prompt.prompt_lst[numberKey](count,subject, rags)}) 
+def get_completion(prompt, numberKey,count, subject, rags, tempt_problem):     
+    history.append({'role':'user','content':gpt_prompt.prompt_lst[numberKey](count,subject, rags, tempt_problem)}) 
     query = openai.ChatCompletion.create( 
        model="gpt-4-turbo",
-       messages=[{"role": "system", "content": gpt_prompt.System_lst[numberKey]}, {'role':'user','content':gpt_prompt.prompt_lst[numberKey](count,subject, rags)}], 
+       messages=[{"role": "system", "content": gpt_prompt.System_lst[numberKey]}, {'role':'user','content':gpt_prompt.prompt_lst[numberKey](count,subject, rags, tempt_problem)}], 
        max_tokens=1024, 
        n=1,
        stop=None,
@@ -46,10 +47,10 @@ def get_completion(prompt, numberKey,count, subject, rags):
 def index(request):
     return HttpResponse("Communication start")
     
-def query_view(request,numberKey, count, subject, rags): 
+def query_view(request,numberKey, count, subject, rags, tempt_problem): 
     prompt = request.data.get('username') 
     prompt=str(prompt)
-    response = get_completion(prompt, numberKey,count, subject, rags)
+    response = get_completion(prompt, numberKey,count, subject, rags, tempt_problem)
     return JsonResponse({'response': response}), response 
 
 def get_completion_feedback(prompt):     
@@ -232,7 +233,7 @@ def GenerateQuestion(request):
             if 1 <= Quest_dict[tempt] <= 3 and m == Quest_dict[tempt]:
                 tmp = dict()
                 tmp['type'] = Quest_dict[tempt]
-                a, t = query_view(request,Quest_dict[tempt], request.data.get('selections')[tempt], coursename, rags)
+                a, t = query_view(request,Quest_dict[tempt], request.data.get('selections')[tempt], coursename, rags, tempt_problem)
                 tmp['items'] = GenerateMultipleProblem(t)
                 tmp['count'] = request.data.get('selections')[tempt]
                 c = request.data.get('selections')[tempt]
@@ -244,14 +245,14 @@ def GenerateQuestion(request):
                             tempt_problem += k[i]+'\n'
                         elif i == 'options':
                             for id, j in enumerate(k[i]):
-                                tempt_problem += f'{id+1}번 : ' +'\n'
+                                tempt_problem += '' #f'{id+1}번 : ' +'\n'
                         elif i == 'answer':
-                            tempt_problem += k[i]+'\n'
-                    tempt_problem += '\n\n'
+                            tempt_problem +='' # k[i]+'\n'
+                    tempt_problem += '\n'
             elif 4 <= Quest_dict[tempt] <= 6 and m == Quest_dict[tempt]:
                 tmp = dict()
                 tmp['type'] = Quest_dict[tempt]
-                a, t = query_view(request,Quest_dict[tempt], request.data.get('selections')[tempt], coursename, rags)
+                a, t = query_view(request,Quest_dict[tempt], request.data.get('selections')[tempt], coursename, rags, tempt_problem)
                 tmp['items'] = GenerateWriteProblem(t)
                 tmp['count'] = request.data.get('selections')[tempt]
                 c = request.data.get('selections')[tempt]
@@ -262,8 +263,8 @@ def GenerateQuestion(request):
                         if i == 'content':
                             tempt_problem += k[i]+'\n'
                         elif i == 'answer':
-                            tempt_problem += k[i]+'\n'
-                    tempt_problem += '\n\n'
+                            tempt_problem +='' #k[i]+'\n'
+                    tempt_problem += '\n'
                     cnt += 1
             elif Quest_dict[tempt] == 7 and m == Quest_dict[tempt]:
                 tmp = dict()
