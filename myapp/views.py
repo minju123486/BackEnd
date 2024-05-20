@@ -20,10 +20,9 @@ from .models import course, professor_lecture, student_lecture, problem, answer,
 from Login.models import school
 from .crawling import crawl_lst
 from datetime import datetime
-# env = environ.Env()
-# environ.Env.read_env(Path(__file__).resolve().parent/'.env')
-# openai.api_key = env('Key')
-
+env = environ.Env()
+environ.Env.read_env(Path(__file__).resolve().parent/'.env')
+openai.api_key = env('Key')
 Sub_dict = {"자바프로그래밍" : 1, "C++프로그래밍" : 2, "파이썬프로그래밍" : 3}
 
 
