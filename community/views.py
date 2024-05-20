@@ -97,14 +97,6 @@ def content_view(request):
     tempt_comment = comment.objects.filter(post_id = post__id)
     for tmp in tempt_comment:
         rtr['comment'].append({'content' : tmp.content, 'author' : tmp.author,'year':tmp.year,'month':tmp.month,'day':tmp.day,'hour':tmp.hour,'minute':tmp.minute})
-    for i in range(1,5):
-        tempt_grade_search = grade_search.objects.filter(grade=str(i))
-        tmp_lst = []
-        for tmp in tempt_grade_search:
-            w,g,c = tmp.watch, tmp.grade, tmp.content
-            tmp_lst.append((w,g,c))
-        sorted_data_Bysearch = sorted(tmp_lst, key=lambda x: (x[0]), reverse=True)
-        rtr[str(i)] = sorted_data_Bysearch
     return Response(rtr, status = 200)
 
 
@@ -123,7 +115,15 @@ def post_view(request):
     rtr['popular'] = sorted_data_Bywatch
     print(rtr['free'])
     print(rtr['popular'])
-
+    for i in range(1,5):
+        tempt_grade_search = grade_search.objects.filter(grade=str(i))
+        tmp_lst = []
+        for tmp in tempt_grade_search:
+            w,g,c = tmp.watch, tmp.grade, tmp.content
+            tmp_lst.append((w,g,c))
+        sorted_data_Bysearch = sorted(tmp_lst, key=lambda x: (x[0]), reverse=True)
+        rtr[str(i)] = sorted_data_Bysearch
+        print(rtr[str(i)])
     return Response(rtr, status = 200)
 
 @api_view(['POST'])
