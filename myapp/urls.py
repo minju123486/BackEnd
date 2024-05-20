@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from myapp import views
+from myapp import tests
 
 urlpatterns = [
     path('', views.index),
@@ -33,5 +34,7 @@ urlpatterns = [
     path('problem_check/', views.problem_check),
     path('feedback_view/', views.feedback_view),
     path('feedback/', views.feedback),
+    path('chat_init/', tests.chat_init),
+    path('chat_response/', tests.chat_response)   
 ]
 
