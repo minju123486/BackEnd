@@ -27,3 +27,11 @@ class comment(models.Model):
 class like_check(models.Model):
     user_name = models.CharField(max_length=50)
     post_id = models.CharField(max_length=50)
+    
+    
+class grade_search(models.Model):
+    watch = models.IntegerField()
+    grade = models.CharField(max_length=50)
+    content = models.CharField(max_length=50)
+    
+

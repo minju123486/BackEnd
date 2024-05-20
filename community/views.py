@@ -19,7 +19,7 @@ import os
 from myapp.models import course, professor_lecture, student_lecture, problem, answer
 from Login.models import school
 from datetime import datetime
-from .models import post, comment, like_check
+from .models import post, comment, like_check, grade_search
 
 @api_view(['POST'])   
 def post_create(request): # for professor
@@ -91,6 +91,14 @@ def content_view(request):
     tempt_comment = comment.objects.filter(post_id = post__id)
     for tmp in tempt_comment:
         rtr['comment'].append({'content' : tmp.content, 'author' : tmp.author,'year':tmp.year,'month':tmp.month,'day':tmp.day,'hour':tmp.hour,'minute':tmp.minute})
+    for i in range(1,5):
+        tempt_grade_search = grade_search.objects.filter(grade=str(i))
+        tmp_lst = []
+        for tmp in tempt_grade_search:
+            w,g,c = tmp.watch, tmp.grade, tmp.content
+            tmp_lst.append((w,g,c))
+        sorted_data_Bysearch = sorted(tmp_lst, key=lambda x: (x[0]), reverse=True)
+        rtr[str(i)] = sorted_data_Bysearch
     return Response(rtr, status = 200)
 
 
@@ -125,6 +133,14 @@ def search(request):
     sorted_data_Bysearch = sorted(lst, key=lambda x: (x['year'], x['month'], x['day'], x['hour'], x['minute']), reverse=True)
     rtr['search'] = sorted_data_Bysearch
     print(rtr['search'])
+    try:
+        obj = grade_search.objects.get(grade = request.user.grade, content = inp)
+        obj.watch += 1
+        obj.save()
+    except:
+        obj = grade_search.objects.get(grade = request.user.grade, content = inp, watch = 1)
+        obj.save()
+        
 
     return Response(rtr, status = 200)
 
@@ -145,3 +161,5 @@ def comment_create(request): # for professor
     tempt = comment(post_id = post__id, content = post_content, author = post_author, year = n_year, month = n_month, day = n_day, hour = n_hour, minute = n_minute)
     tempt.save()
     return Response({'message':'success'}, status = 200)
+
+
