@@ -226,6 +226,7 @@ def GenerateQuestion(request):
     for _ in range(10):
         problem_lst.append('')
     cnt = 0
+    tempt_problem = ''
     for m in range(1,8):
         for tempt in request.data.get('selections'):    
             if 1 <= Quest_dict[tempt] <= 3 and m == Quest_dict[tempt]:
@@ -240,15 +241,13 @@ def GenerateQuestion(request):
                     tempt_content = f'{Quest_dict[tempt]}'
                     for i in k:
                         if i == 'content':
-                            tempt_content += '$$'+k[i]
+                            tempt_problem += k[i]+'\n'
                         elif i == 'options':
                             for id, j in enumerate(k[i]):
-                                tempt_content += '$$'+f'{id+1}번 : ' +j
+                                tempt_problem += f'{id+1}번 : ' +'\n'
                         elif i == 'answer':
-                            tempt_content += '$$'+k[i]
-                    tempt_content += f'$${c}'
-                    problem_lst[cnt] = tempt_content
-                    cnt += 1
+                            tempt_problem += k[i]+'\n'
+                    tempt_problem += '\n\n'
             elif 4 <= Quest_dict[tempt] <= 6 and m == Quest_dict[tempt]:
                 tmp = dict()
                 tmp['type'] = Quest_dict[tempt]
@@ -261,11 +260,10 @@ def GenerateQuestion(request):
                     tempt_content = f'{Quest_dict[tempt]}'
                     for i in k:
                         if i == 'content':
-                            tempt_content += '$$'+k[i]
+                            tempt_problem += k[i]+'\n'
                         elif i == 'answer':
-                            tempt_content += '$$'+k[i]
-                    tempt_content +=  f'$${c}'
-                    problem_lst[cnt] = tempt_content
+                            tempt_problem += k[i]+'\n'
+                    tempt_problem += '\n\n'
                     cnt += 1
             elif Quest_dict[tempt] == 7 and m == Quest_dict[tempt]:
                 tmp = dict()
@@ -278,6 +276,9 @@ def GenerateQuestion(request):
     print(problem_lst)
     lecture = professor_lecture.objects.filter(course_name=coursename, username=professor_user_name).first()
     print(lecture)
+    print('-------------------------------------------')
+    print(tempt_problem)
+    print('-------------------------------------------')
     print(professor_user_name)
     print(ans)
     return Response(ans, status=status.HTTP_200_OK)
