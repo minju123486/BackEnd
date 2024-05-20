@@ -43,8 +43,11 @@ def post_create(request): # for professor
 
 @api_view(['POST'])   
 def post_like(request): # for professor
-    post_id = request.data.get('id')
-    post_1 = post.objects.get(id=post_id)
+    postid = request.data.get('id')
+    username = request.user.username
+    post_1 = post.objects.get(id=postid)
+    obj = like_check(user_name = username, post_id = postid)
+    obj.save()
     post_1.like += 1
     post_1.save()
     return Response({'message':'success'}, status = 200)
@@ -52,8 +55,11 @@ def post_like(request): # for professor
 
 @api_view(['POST'])   
 def post_dislike(request): # for professor
-    post_id = request.data.get('id')
-    post_1 = post.objects.get(id=post_id)
+    postid = request.data.get('id')
+    post_1 = post.objects.get(id=postid)
+    username = request.user.username
+    obj = like_check.objects.filter(user_name = username, post_id = postid)
+    obj.delete()
     post_1.like -= 1
     post_1.save()
     return Response({'message':'success'}, status = 200)
