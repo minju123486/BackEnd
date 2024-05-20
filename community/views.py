@@ -101,13 +101,27 @@ def post_view(request):
         lst.append({'id':tmp.id,'title' : tmp.title, 'author' : tmp.author, 'content':tmp.content, 'year':tmp.year, 'month':tmp.month, 'day':tmp.day,'hour':tmp.hour,'minute':tmp.minute, 'watch':tmp.watch, 'like':tmp.like, 'comment_number':tmp.comment_number})
     sorted_data_Byfree = sorted(lst, key=lambda x: (x['year'], x['month'], x['day'], x['hour'], x['minute']), reverse=True)
     sorted_data_Bywatch = sorted(lst, key=lambda x: (x['watch']), reverse=True)
-    while len(sorted_data_Byfree) > 10:
-        sorted_data_Byfree.pop()
     while len(sorted_data_Bywatch) > 4:
         sorted_data_Bywatch.pop()
     rtr['free'] = sorted_data_Byfree
     rtr['popular'] = sorted_data_Bywatch
     print(rtr['free'])
     print(rtr['popular'])
+
+    return Response(rtr, status = 200)
+
+@api_view(['POST'])
+def search(request):
+    rtr = {}
+    lst = []
+    all_posts = post.objects.all()
+    inp = request.data.get('content')
+    print(inp)
+    for tmp in all_posts:   
+        if inp in tmp.title or inp in tmp.content:
+            lst.append({'id':tmp.id,'title' : tmp.title, 'author' : tmp.author, 'content':tmp.content, 'year':tmp.year, 'month':tmp.month, 'day':tmp.day,'hour':tmp.hour,'minute':tmp.minute, 'watch':tmp.watch, 'like':tmp.like, 'comment_number':tmp.comment_number})
+    sorted_data_Bysearch = sorted(lst, key=lambda x: (x['year'], x['month'], x['day'], x['hour'], x['minute']), reverse=True)
+    rtr['search'] = sorted_data_Bysearch
+    print(rtr['search'])
 
     return Response(rtr, status = 200)
