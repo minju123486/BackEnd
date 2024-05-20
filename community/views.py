@@ -44,18 +44,18 @@ def post_create(request): # for professor
 @api_view(['POST'])   
 def post_like(request): # for professor
     post_id = request.data.get('id')
-    post = post.objects.get(id=post_id)
-    post.like += 1
-    post.save()
+    post_1 = post.objects.get(id=post_id)
+    post_1.like += 1
+    post_1.save()
     return Response({'message':'success'}, status = 200)
 
 
 @api_view(['POST'])   
 def post_dislike(request): # for professor
     post_id = request.data.get('id')
-    post = post.objects.get(id=post_id)
-    post.like -= 1
-    post.save()
+    post_1 = post.objects.get(id=post_id)
+    post_1.like -= 1
+    post_1.save()
     return Response({'message':'success'}, status = 200)
 
 def like__check(username, post__id):
@@ -72,6 +72,8 @@ def content_view(request):
     user_name = request.user.username
     print(3)
     tempt = post.objects.get(id = post__id)
+    tempt.watch += 1
+    tempt.save()
     print(4)
     rtr = {}
     rtr['content'] = tempt.content
@@ -125,3 +127,21 @@ def search(request):
     print(rtr['search'])
 
     return Response(rtr, status = 200)
+
+@api_view(['POST'])   
+def comment_create(request): # for professor
+    post__id = request.data.get('post_id')
+    post_author = 'hahahahaaha'
+    post_content = request.data.get('content')
+    print(post__id, post_author, post_content)
+    now = datetime.now()
+
+
+    n_year = now.year
+    n_month = now.month
+    n_day = now.day
+    n_hour = now.hour
+    n_minute = now.minute
+    tempt = comment(post_id = post__id, content = post_content, author = post_author, year = n_year, month = n_month, day = n_day, hour = n_hour, minute = n_minute)
+    tempt.save()
+    return Response({'message':'success'}, status = 200)

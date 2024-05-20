@@ -5,6 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 
 # Get the API key from environment variable
+api_key = 'JMqcRMsdqKn1tJllEulhhA1S9OaJE9im'
 
 # 모델 2개 설정
 llm = ChatUpstage(upstage_api_key=api_key)  # Solar 기본 모델

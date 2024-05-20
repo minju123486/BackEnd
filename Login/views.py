@@ -143,7 +143,7 @@ def my_view(request):
 def name_check(request):
     print(f'이름 체크 id ======= {request.user.name}')
     print(f'이름 체크 id ======= {request.user.name}')
-    return Response(data={"name": request.user.name,"usertype": request.user.usertype})
+    return Response(data={"name": request.user.name,"usertype": request.user.usertype,'username':request.user.username})
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
