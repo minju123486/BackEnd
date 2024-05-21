@@ -85,7 +85,6 @@ def generate_blog(greeting, tmi, who, what, why, where, when, how, prompt_korean
             temperature=0.8
         )
         text = response.choices[0].message.content
-        pyperclip.copy(text)  # 클립보드에 텍스트 복사
         return text
     except Exception as e:
         print(f"Error: {str(e)}")
