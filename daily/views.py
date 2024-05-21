@@ -318,6 +318,9 @@ def classdaily_save(request):
     print(title)
     print('-----------')
     content = request.data.get('content')
+    print('--------------------')
+    print(content)
+    print('======================')
     username = request.user.username
     now = datetime.now()
 

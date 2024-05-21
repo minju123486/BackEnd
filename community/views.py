@@ -24,7 +24,7 @@ from .models import post, comment, like_check, grade_search
 @api_view(['POST'])   
 def post_create(request): # for professor
     post_title = request.data.get('title')
-    post_author = 'hahahahaaha'
+    post_author = request.user.username
     post_content = request.data.get('content')
     print(post_title, post_author,post_content)
     now = datetime.now()
@@ -153,7 +153,7 @@ def search(request):
 @api_view(['POST'])   
 def comment_create(request): # for professor
     post__id = request.data.get('post_id')
-    post_author = 'hahahahaaha'
+    post_author = request.user.username
     post_content = request.data.get('content')
     print(post__id, post_author, post_content)
     now = datetime.now()
@@ -183,10 +183,10 @@ def main_com(request): # for professor
     for i in sorted_data_Byfree:
         tempt = {}
         tempt['title'] = i['title']
-        tempt['content'] = i['content']
+        tempt['content'] = i['content'][0:50]+'....'
         tempt['date'] = str(i['year'])+" "+str(i['month'])+' '+str(i['day'])
         lst_2.append(tempt)
-    rtr['comment'] = lst_2
+    rtr['com'] = lst_2
         
 
     return Response(rtr, status = 200)

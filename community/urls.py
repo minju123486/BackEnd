@@ -25,4 +25,5 @@ urlpatterns = [
     path('post_view/', views.post_view),
     path('search/', views.search),
     path('comment_create/', views.comment_create),
+    path('mock_commu/', views.main_com)
 ]
