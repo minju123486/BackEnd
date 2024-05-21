@@ -326,6 +326,7 @@ def student_problem(request):
     print(request.data)
     coursename = request.data.get('course_name')
     professor_name = request.data.get('course_professor')
+    print(professor_name, coursename)
     obj = school.objects.filter(username = professor_name).first()
     professor_id = obj.id
     lecture = professor_lecture.objects.filter(username = professor_name, course_name = coursename).first()
