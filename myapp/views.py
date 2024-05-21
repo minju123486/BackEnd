@@ -450,8 +450,8 @@ def problem_check(request):
     professor_name = request.data.get('professor_name')
     course_name = request.data.get('course_name')
     lecture_tempt = professor_lecture.objects.filter(username = professor_name, course_name = course_name).first()
-    lecture__id = lecture_tempt.id
     try:
+        lecture__id = lecture_tempt.id
         pl = problem.objects.get(lecture_id = lecture__id).first()
         return Response({'check':1}, status=status.HTTP_200_OK)
     except:
