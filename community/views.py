@@ -113,8 +113,8 @@ def post_view(request):
         sorted_data_Bywatch.pop()
     rtr['free'] = sorted_data_Byfree
     rtr['popular'] = sorted_data_Bywatch
-    print(rtr['free'])
-    print(rtr['popular'])
+    # print(rtr['free'])
+    # print(rtr['popular'])
     for i in range(1,5):
         tempt_grade_search = grade_search.objects.filter(grade=str(i))
         tmp_lst = []
@@ -123,7 +123,7 @@ def post_view(request):
             tmp_lst.append((w,g,c))
         sorted_data_Bysearch = sorted(tmp_lst, key=lambda x: (x[0]), reverse=True)
         rtr[str(i)] = sorted_data_Bysearch
-        print(rtr[str(i)])
+        # print(rtr[str(i)])
     return Response(rtr, status = 200)
 
 @api_view(['POST'])
@@ -144,7 +144,7 @@ def search(request):
         obj.watch += 1
         obj.save()
     except:
-        obj = grade_search.objects.get(grade = request.user.grade, content = inp, watch = 1)
+        obj = grade_search(grade = request.user.grade, content = inp, watch = 1)
         obj.save()
         
 
@@ -169,3 +169,24 @@ def comment_create(request): # for professor
     return Response({'message':'success'}, status = 200)
 
 
+@api_view(['GET'])   
+def main_com(request): # for professor
+    rtr = {}
+    lst = []
+    all_posts = post.objects.all()
+    for tmp in all_posts:
+        lst.append({'id':tmp.id,'title' : tmp.title, 'author' : tmp.author, 'content':tmp.content, 'year':tmp.year, 'month':tmp.month, 'day':tmp.day,'hour':tmp.hour,'minute':tmp.minute, 'watch':tmp.watch, 'like':tmp.like, 'comment_number':tmp.comment_number})
+    sorted_data_Byfree = sorted(lst, key=lambda x: (x['year'], x['month'], x['day'], x['hour'], x['minute']), reverse=True)
+    while len(sorted_data_Byfree) > 6:
+        sorted_data_Byfree.pop()
+    lst_2 = []
+    for i in sorted_data_Byfree:
+        tempt = {}
+        tempt['title'] = i['title']
+        tempt['content'] = i['content']
+        tempt['date'] = str(i['year'])+" "+str(i['month'])+' '+str(i['day'])
+        lst_2.append(tempt)
+    rtr['comment'] = lst_2
+        
+
+    return Response(rtr, status = 200)

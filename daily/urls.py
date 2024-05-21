@@ -19,4 +19,12 @@ from daily import views
 
 urlpatterns = [
     path('generate_daily/', views.generate_daily),
+    path('daily_save/', views.daily_save),
+    path('mock_diary/', views.mock_diary),
+    path('daily_view/', views.daily_view),
+    path('daily_look/', views.daily_look),
+    path('classdaily_save/', views.classdaily_save),
+    path('classdaily_view/', views.classdaily_view),
+    path('classdaily_look/', views.classdaily_look),
+    path('study_diary/', views.study_diary)
 ]

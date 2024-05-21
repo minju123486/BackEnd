@@ -3,7 +3,6 @@ from django.shortcuts import render, HttpResponse, redirect
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-import openai
 import os
 import environ
 
@@ -14,16 +13,19 @@ from pathlib import Path
 from django.shortcuts import render 
 from django.http import JsonResponse
 from myapp import gpt_prompt
-import openai
+from openai import OpenAI
 import os
 from .models import course, professor_lecture, student_lecture, problem, answer, feedback_list
 from Login.models import school
 from .crawling import crawl_lst
 from datetime import datetime
-# env = environ.Env()
-# environ.Env.read_env(Path(__file__).resolve().parent/'.env')
+env = environ.Env()
+environ.Env.read_env(Path(__file__).resolve().parent/'.env')
 # openai.api_key = env('Key')
-
+client = OpenAI(
+    # This is the default and can be omitted
+    api_key=env('Key')
+)
 Sub_dict = {"자바프로그래밍" : 1, "C++프로그래밍" : 2, "파이썬프로그래밍" : 3}
 
 
@@ -31,15 +33,12 @@ Quest_dict = {'객관식-빈칸': 1, '객관식-단답형': 2, '객관식-문장
 history = []
 def get_completion(prompt, numberKey,count, subject, rags, tempt_problem):     
     history.append({'role':'user','content':gpt_prompt.prompt_lst[numberKey](count,subject, rags, tempt_problem)}) 
-    query = openai.ChatCompletion.create( 
+    query = client.chat.completions.create( 
        model="gpt-4-turbo",
        messages=[{"role": "system", "content": gpt_prompt.System_lst[numberKey]}, {'role':'user','content':gpt_prompt.prompt_lst[numberKey](count,subject, rags, tempt_problem)}], 
-       max_tokens=1024, 
-       n=1,
-       stop=None,
-       temperature=0.5, 
+       max_tokens=1028, 
     ) 
-    response = query.choices[0].message["content"]
+    response = query.choices[0].message.content
     history.append({'role':'assistant', 'content':response})
     print(response)
     return response
@@ -54,15 +53,12 @@ def query_view(request,numberKey, count, subject, rags, tempt_problem):
     return JsonResponse({'response': response}), response 
 
 def get_completion_feedback(prompt):     
-    query = openai.ChatCompletion.create( 
+    query = client.chat.completions.create( 
        model="gpt-4",
        messages=[{"role": "system", "content": gpt_prompt.sys_feedback}, {'role':'user','content': prompt}], 
-       max_tokens=1024, 
-       n=1,
-       stop=None,
-       temperature=0.5, 
+       max_tokens=1024
     ) 
-    response = query.choices[0].message["content"]
+    response = query.choices[0].message.content
     print(response)
     return response
 
@@ -464,6 +460,9 @@ def problem_check(request):
 @api_view(['POST'])   
 def feedback(request): # for professor
     idx = request.data.get('id')
+    print('--------------------------')
+    print(idx)
+    print('--------------------------')
     lecture_tempt = feedback_list.objects.filter(id = idx).first()
     rtr = {}
     lst = list(lecture_tempt.correct_count.split(" "))
@@ -554,7 +553,6 @@ def feedback_save(request): # for professor
     return Response({'message':'success'}, status=status.HTTP_200_OK)
 
 def feed(request): # for professor
-    lecture__id = 2
     professor_name = request.data.get('professor_name')
     course_name = request.data.get('course_name')
     
@@ -581,7 +579,7 @@ def feed(request): # for professor
     full_query += '''\n 문제들은 다음과 같고 이제 학생들의 답안을 알려줄게 답안을 전부 종합해서 피드백을 해줘. 단 출력에는 규칙이 있고 이 규칙들을 반드시 지켜야해.
                     네 알겠습니다 같은 답변은 전부 뺴고 필요한 답변만 해줘.
                     일단 시작은 각 문제별로 몇 명이 맞았는지 알려줘. 양식은 다음과 같이 알려줘.
-                    문제번호. (맞춘 사람 수) 문제번호랑 맞춘 사람 수는 번, 명 표시할 필요없이 숫자만 넣어줘.
+                    문제번호 맞춘 사람 수 문제번호랑 맞춘 사람 수는 번, 명 표시할 필요없이 숫자만 넣어줘. 숫자 이외에는 어떤 것도 붙이지마.
                     위와 같은 양식으로 모든 문제에 대해서 출력하고 그 밑에는 학생들의 이해도에 대한 피드백을 작성해줘.
                     학생들의 수업내용에 관한 이해를 체크하기 위해 낸 문제들이고 답안을 종합해서 어디 부분에 이해가 부족하고 어디 부분은 이해가 잘 되어있다는 피드백이면 돼.
                     대학교 학부 1~2학년 학생들이 처음 배우는 상황이기 때문에 애매모호하게 어느정도만 이해했다고 판단되는 경우에는 맞았다고 판단해줘.
@@ -609,7 +607,7 @@ def feed(request): # for professor
     for k in rtr_lst:
         print(k)
         if len(k) >= 3 and len(k) <= 5:
-            a,b = k.split(". ")
+            a,b = k.split(" ")
             lst += str(b)+' '
         else:
             feed_tempt += k

@@ -9,6 +9,7 @@ import environ
 import pyperclip
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from datetime import datetime
 # from tkinter import Tk, messagebox
 
 
@@ -18,12 +19,18 @@ from pathlib import Path
 from django.shortcuts import render 
 from django.http import JsonResponse
 from myapp import gpt_prompt
-import openai
+from openai import OpenAI
 import os
-# env = environ.Env()
-# environ.Env.read_env(Path(__file__).resolve().parent/'.env')
+from community.models import post
+from .models import daily_model, daily_class
+env = environ.Env()
+environ.Env.read_env(Path(__file__).resolve().parent/'.env')
 # openai.api_key = env('Key')
 # 인삿말
+client = OpenAI(
+    # This is the default and can be omitted
+    api_key=env('Key')
+)
 def hello(where, tmi):
     model_engine = "gpt-3.5-turbo" # 장소 fine-tuning 3.5 turbo model  ft:gpt-3.5-turbo-0125:personal::9JO9ePp4
     prompt = prompt_hello.format(
@@ -31,7 +38,7 @@ def hello(where, tmi):
     )
     
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model=model_engine,
             messages=[
                 {"role": "system", "content": "당신은 공부 일기 블로그 포스팅의 인삿말을 생성하는 20대 대학생입니다."},
@@ -39,7 +46,11 @@ def hello(where, tmi):
             ],
             max_tokens=1028
         )
-        text = response['choices'][0]['message']['content']
+        print('===============')
+        print(response)
+        print('===============')
+        text = response.choices[0].message.content
+        print(text)
         return text
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -64,7 +75,7 @@ def generate_blog(greeting, tmi, who, what, why, where, when, how, prompt_korean
     )
     
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model=model_engine,
             messages=[
                 {"role": "system", "content": "공부 일기 블로그 포스팅을 생성하는 AI 시스템입니다."},
@@ -73,7 +84,7 @@ def generate_blog(greeting, tmi, who, what, why, where, when, how, prompt_korean
             max_tokens=4096,
             temperature=0.8
         )
-        text = response['choices'][0]['message']['content']
+        text = response.choices[0].message.content
         pyperclip.copy(text)  # 클립보드에 텍스트 복사
         return text
     except Exception as e:
@@ -85,7 +96,7 @@ prompt_korean_template = '''
 
 블로그 포스트를 마크다운 형식으로 작성해. 중요한 단어나 문장을 굵게, 기울임꼴 또는 밑줄로 강조해.
 제목은 블로그 게시물에 대한 눈에 띄고 SEO 친화적인 제목을 생성해.
-
+제목은 무조건 '제목:' 을 앞에 기재하세요.
 인사는 항상 "안니옹하세용. 한량 규 입니다. 요즘 제가 정신이 하나도 없는데요! 이 일기 생성이 너~~~무 안되서 머리가 터질 것 같아요! 그래도 다시 한 번 힘내보겠습니다!" 로 출력해.
 
 다음 줄에는 {{tmi}}에 대해서 언급을 해주고, "오늘은 {{what}}에 대해서 공부해봤습니다~ 이게 뭔지 이제 설명해드릴게요!" 출력해
@@ -187,17 +198,34 @@ def generate_daily(request):
     why = request.data.get('why')
     tmi = request.data.get('others')
     print("WWOWWOW")
-    
+    now = datetime.now()
+
+
+    n_year = now.year
+    n_month = now.month
+    n_day = now.day
     
     greeting = hello(where, tmi)
     print(greeting)
     blog_content = generate_blog(greeting, tmi, who, what, why, where, when, how, prompt_korean_template)
+    title = f'{n_year}.{n_month}.{n_day}. '
     if blog_content:
         final_blog_content = f"{greeting}\n\n{blog_content}"
         lst = list(final_blog_content.split("\n"))
         print(lst)
-        pyperclip.copy(final_blog_content)
-        return Response({'diaryText' : lst}, status=status.HTTP_200_OK) 
+        no_title_lst = []
+        check = 1
+        for k in lst:
+            if '제목' in k and check == 1:
+                title += k
+                check = 0
+            else:
+                no_title_lst.append(k)
+        print("------------------")
+        print(title)
+        print("------------------")
+        # pyperclip.copy(final_blog_content)
+        return Response({'diaryText' : no_title_lst, 'title' : title}, status=status.HTTP_200_OK) 
     
     
     
@@ -207,22 +235,185 @@ def generate_daily(request):
     
     
     
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def daily_save(request):
-    daily_post = request.data.get('daily')
+    title = request.data.get('title')
+    print('-----------')
+    print(title)
+    print('-----------')
+    content = request.data.get('content')
+    ch = int(request.data.get('check'))
+    username = request.user.username
+    now = datetime.now()
+
+
+    n_year = now.year
+    n_month = now.month
+    n_day = now.day
+    n_hour = now.hour
+    n_minute = now.minute
+    obj = daily_model(author = username, title = title, content = content, year = n_year, month = n_month, day = n_day, hour = n_hour, minute = n_minute)
+    obj.save()
+    if ch == 1:
+        tmp = post(author = username, title = title, content = content, year = n_year, month = n_month, day = n_day, hour = n_hour, minute = n_minute, watch = 0, like = 0, comment_number = 0)
+        tmp.save()
+    return Response({'message' : 'success'}, status=status.HTTP_200_OK)
+    
+@api_view(['GET'])
+def daily_view(request):
+    return Response({'title':['2024.05.12', '2024.05.31', '2024.05.14' ],'id':[1, 2, 3 ]}, status = 200)               
+    
+
+@api_view(['GET'])
+def mock_diary(request):
+    user_name = request.user.username
+    tempt = daily_model.objects.filter(author = user_name)
+    title = []
+    id = []
+    content = []
+    tmp = {}
+    for i in tempt:
+        title.append(i.title)
+        id.append(i.id)
+        content.append(i.content[:50]+'....')
+    tmp['title'] = title
+    tmp['content'] = content
+    tmp['id'] = id
+    
+    
+    return Response(tmp, status = 200)             
+
+
+@api_view(['GET'])
+def daily_view(request):
+    user_name = request.user.username
+    tempt = daily_model.objects.filter(author = user_name)
+    title = []
+    id = []
+    content = []
+    tmp = {}
+    for i in tempt:
+        title.append(i.title)
+        id.append(i.id)
+    tmp['title'] = title
+    tmp['id'] = id
+    return Response(tmp, status = 200) 
+  
+    
+@api_view(['POST'])
+def daily_look(request):
+    id = request.data.get('id')
+    tempt = daily_model.objects.filter(id = id).first()
+    return Response({'title':tempt.title, 'content':tempt.content}, status = 200) 
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def classdaily_save(request):
+    title = request.data.get('title')
+    print('-----------')
+    print(title)
+    print('-----------')
+    content = request.data.get('content')
+    username = request.user.username
+    now = datetime.now()
+
+
+    n_year = now.year
+    n_month = now.month
+    n_day = now.day
+    n_hour = now.hour
+    n_minute = now.minute
+    obj = daily_class(author = username, title = title, content = content, year = n_year, month = n_month, day = n_day, hour = n_hour, minute = n_minute)
+    obj.save()
+    return Response({'message' : 'success'}, status=status.HTTP_200_OK)
+    
+@api_view(['GET'])
+def classdaily_view(request):
+    user_name = request.user.username
+    tempt = daily_class.objects.filter(author = user_name)
+    title = []
+    id = []
+    tmp = {}
+    for i in tempt:
+        title.append(i.title)
+        id.append(i.id)
+    tmp['title'] = title
+    tmp['id'] = id
+    return Response(tmp, status = 200)    
+
+
+@api_view(['POST'])
+def classdaily_look(request):
+    id = request.data.get('id')
+    tempt = daily_class.objects.filter(id = id).first()
+    return Response({'title':tempt.title, 'content':tempt.content}, status = 200) 
+
+
+    
+
+    
+    
+prompt_study_diary = '''
+오늘 수업에서 무엇을 배웠는지 수업일기를 작성하는 20대 대학생입니다.
+
+제목을 생성합니다. 제목은 무조건 '제목:' 을 앞에 기재하세요.
+
+입력으로 받은 내용을 바탕으로 학습 일기를 작성하세요.
+주어진 주제에 대해 이해가 잘 되는 부분과 안 되는 부분을 나눠서 작성하세요.
+
+학생에게 {}에 대해 피드백을 주는 느낌으로 작성하세요.
+
+본문에 어울리는 이모지를 같이 작성하고, 느낌표와 같이 강조할 수 있는 부분은 친근한 표현과 함께 강조하세요.
+
+입력 예시:
+오늘 PostgreSQL을 공부했는데 TABLE 같은 형식은 다 알겠는데 오픈소스 데이터베이스 개념이 조금 생소하더라
+
+출력 예시:
+오늘은 PostgreSQL을 공부했는데 TABLE 같은 형식은 다 이해를 한 것 같다. 하지만 오픈소스 데이터베이스라는 개념이 조금 헷갈리는데 찾아보니 오픈소스 데이터베이스라는 것은 (오픈소스 데이터베이스 개념 설명, 동작 원리) 이런 것이었다. 앞으로도 오픈소스 데이터베이스에 대해서 더 열심히 공부해야겠다! 😊
+'''
     
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+@api_view(['POST'])   
+def study_diary(request):
+    global prompt_study_diary
+    what = request.data.get('what')
+    model_engine = "gpt-3.5-turbo"  # 장소 fine-tuning 3.5 turbo model  ft:gpt-3.5-turbo-0125:personal::9JO9ePp4
+    today_date = datetime.today().strftime('%Y-%m-%d')
+    prompt = prompt_study_diary.format(what, today_date)
+    now = datetime.now()
+
+
+    n_year = now.year
+    n_month = now.month
+    n_day = now.day
+    n_hour = now.hour
+    n_minute = now.minute
+    try:
+        response = client.chat.completions.create(
+            model=model_engine,
+            messages=[
+                {"role": "system", "content": "당신은 공부 일기 블로그 포스팅의 인삿말을 생성하는 20대 대학생입니다."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=1028
+        )
+        text = response.choices[0].message.content
+        tmp = list(text.split('\n'))
+        title = f'{n_year}.{n_month}.{n_day}.'
+        for k in tmp:
+            if '제목' in k:
+                title += k
+        return Response({'title':title, 'content':text}, status = 200)
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return Response({'title':'wow', 'content':'dd'}, status = 200)
+
+
+
+# 예시 실행
