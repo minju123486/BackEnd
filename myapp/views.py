@@ -5,7 +5,10 @@ from rest_framework.response import Response
 from rest_framework import status
 import os
 import environ
-
+import requests
+import json
+from langchain_community.chat_models.friendli import ChatFriendli
+import deepl
 from rest_framework.permissions import IsAuthenticated
 user_data = dict()
 
@@ -19,15 +22,15 @@ from .models import course, professor_lecture, student_lecture, problem, answer,
 from Login.models import school
 from .crawling import crawl_lst
 from datetime import datetime
-env = environ.Env()
-environ.Env.read_env(Path(__file__).resolve().parent/'.env')
+# env = environ.Env()
+# environ.Env.read_env(Path(__file__).resolve().parent/'.env')
 # openai.api_key = env('Key')
 client = OpenAI(
     # This is the default and can be omitted
-    api_key=env('Key')
+    api_key= "sk-proj-G1C3bQtNGqVvdo1dfu4IT3BlbkFJaWHW58ubXnAR3vlaNbqK"
 )
-Sub_dict = {"자바프로그래밍" : 1, "C++프로그래밍" : 2, "파이썬프로그래밍" : 3}
-
+Sub_dict = {"Java" : 1, "C++" : 2, "Python" : 3}
+llll = {"자바프로그래밍-Arrays" : "luXuJcSJIcw5", "자바프로그래밍-Class Definitions" : "a41ZG0hk2twJ", "자바프로그래밍-Classes in Depth 1" : "BbiOoy98Wyi5", "자바프로그래밍-Classes in Depth 2" : "sWGgKi5KqCa6", "자바프로그래밍-Conditional Statements" : "ISsjFKdItU7p", "자바프로그래밍-Constructors" : "yowiRGZTt6jd", "자바프로그래밍-Control Statements" : "ZqOtWYcaHo6P", "자바프로그래밍-Creating Objects" : "kkoVuywBXCNa", "자바프로그래밍-Data Types" : "b2hWgyTmqimV", "자바프로그래밍-Inheritance" : "hFZn6DiEgJkZ", "자바프로그래밍-Iteration Statements" : "es7n8OVm1PnO", "자바프로그래밍-Operators" : "WUY7Xkj41TJi", "자바프로그래밍-Overriding" : "EndmGmlEqpsq", "자바프로그래밍-Using Objects" : "oH6BmXs9m6RP", "C++프로그래밍-Constructors" : "3u69DmLLf5Hb", "C++프로그래밍-arithmetic operators" : "F44nLRsiqydg", "C++프로그래밍-Destructors" : "zCjoBh6iNVCn", "C++프로그래밍-Function Overloading" : "S2LwTGWcgHGU", "C++프로그래밍-Functions" : "4DKNfTAxbLoM", "C++프로그래밍-Inheritance" : "1JgbN6hi14Ik", "C++프로그래밍-Iteration statements" : "3KFCsIq9OMxV", "C++프로그래밍-pointer new and delete operators" : "orgeg9QPujko", "C++프로그래밍-Pointer operators" : "QBZrZ4Ze9DgC", "C++프로그래밍-Selection statements (if-else statements)" : "pUo77VMoVrWU", "C++프로그래밍-shared_ptr" : "TaWAtTe8JNZb", "C++프로그래밍-smart pointers" : "JSTucnFuIwtc", "C++프로그래밍-String and Character Literals" : "lREJrk9fil2E", "C++프로그래밍-unique_ptr" : "hVR275pTMInf", "파이썬프로그래밍-A Brief Introduction to Python" : "EtXRJAytipFQ", "파이썬프로그래밍-Classes" : "Mjqb8EhhRLdb", "파이썬프로그래밍-Data Structure" : "jtEYJ29v4zA5", "파이썬프로그래밍-Errors and Exceptions" : "G4zOpdHNBlJA", "파이썬프로그래밍-Input and Output" : "aegIWPDWEjGZ", "파이썬프로그래밍-Modules" : "sp0hbuD6Uez3", "파이썬프로그래밍-Other Control Flow Tools" : "3fA5ueffMiNH", "파이썬프로그래밍-Standard Library Quick Look - Part 2" : "q2PhVusiIitU", "파이썬프로그래밍-Standard Library Quick Look" : "miclvsK4ZpjF", "파이썬프로그래밍-Using the Python Interpreter" : "nzeu0Ypmodfl", "파이썬프로그래밍-Virtual Environments and Packages" : "2LI0V1foae43"}
 
 Quest_dict = {'객관식-빈칸': 1, '객관식-단답형': 2, '객관식-문장형': 3, '단답형-빈칸': 4, '단답형-문장형': 5, 'OX선택형-O/X': 6, '서술형-코딩': 7}
 history = []
@@ -43,14 +46,99 @@ def get_completion(prompt, numberKey,count, subject, rags, tempt_problem):
     print(response)
     return response
 
-def index(request):
-    return HttpResponse("Communication start")
+def chat_function(message):
+    new_messages = []
+    auth_key = "44c49157-0a84-4b83-954f-1b9125baf794:fx"
+    llm = ChatFriendli(
+    model="meta-llama-3-70b-instruct", friendli_token="flp_OydC1Y4tVFBfs1cgI5u0h9bUkQnNDrROcj3ARS751k083"
+)
+
+    new_messages.append({"role": "user", "content": message})
+
+    response = llm.invoke(new_messages)
+    translator = deepl.Translator(auth_key)
+    result = translator.translate_text(response.content, target_lang="KO")
+    return result.text
+
+
+
+def friend_completion(prompt, numberKey,count, subject, rags, tempt_problem): 
+    url = "https://suite.friendli.ai/api/beta/retrieve"
+
+    PAT = "flp_OydC1Y4tVFBfs1cgI5u0h9bUkQnNDrROcj3ARS751k083"
+
+    payload = json.dumps({
+    "query": "Give me 5 multiple choice questions",
+    "k": 13,
+    "document_ids": [rags]
+    })
+    headers = {
+    'Content-Type': 'application/json',
+    'Authorization': f'Bearer {PAT}'
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload)
+    response = response.json()
+    contexts = [r["content"] for r in response["results"]]
+
+    llm = ChatFriendli(
+        model="meta-llama-3-70b-instruct", friendli_token="flp_OydC1Y4tVFBfs1cgI5u0h9bUkQnNDrROcj3ARS751k083"
+    )
+
+
+    template = """{sys_message}
+    {context}
+
+    Question: {question}
+
+    Helpful Answer:"""
+
+    rag_message = template.format(sys_message = gpt_prompt.System_lst[numberKey],
+        context="\n".join(contexts), question=gpt_prompt.prompt_lst[numberKey](count,subject, rags, tempt_problem)
+    )
+    auth_key = "44c49157-0a84-4b83-954f-1b9125baf794:fx"
+    translator = deepl.Translator(auth_key)
+
+    message = llm.call_as_llm(message=rag_message)
+    client = OpenAI(
+    api_key="up_n76I9G4SKzOq3N463RI0V2x3r7d6n",
+    base_url="https://api.upstage.ai/v1/solar"
+    )
+    content = message
+
+    stream = client.chat.completions.create(
+    model="solar-1-mini-translate-enko",
+    messages=[
+        {
+        "role": "user",
+        "content": "Father went into his room"
+        },
+        {
+        "role": "assistant",
+        "content": "아버지가방에들어가셨다"
+        },
+        {
+        "role": "user",
+        "content": content
+        }
+    ],
+    stream=True,
+    )
+    rtr = ''
+    for chunk in stream:
+        if chunk.choices[0].delta.content is not None:
+            rtr += chunk.choices[0].delta.content
+    print(rtr)
+    return rtr
     
 def query_view(request,numberKey, count, subject, rags, tempt_problem): 
     prompt = request.data.get('username') 
     prompt=str(prompt)
     response = get_completion(prompt, numberKey,count, subject, rags, tempt_problem)
     return JsonResponse({'response': response}), response 
+
+def index(request):
+    return HttpResponse("Communication start")
 
 def get_completion_feedback(prompt):     
     query = client.chat.completions.create( 
@@ -94,8 +182,25 @@ def GenerateWriteProblem(tmp):
                     continue
                 b = i[id::]
                 tempt['content'] = b
+        if i[0:7] == 'problem':
+            if len(i) == 7:
+                check = True
+                continue
+            else:
+                id = 7
+                while id <len(i) and i[id] == ' ':
+                    id += 1
+                if len(i) == id:
+                    check = True
+                    continue
+                b = i[id::]
+                tempt['content'] = b
         elif i[0:2] == '정답' or i[0:2] == '정닱':
             tempt['answer'] = i[4::]
+            rtr.append(tempt)
+            tempt = dict()
+        elif i[0:6] == 'Answer':
+            tempt['answer'] = i[8::]
             rtr.append(tempt)
             tempt = dict()
     # print(rtr)
@@ -113,6 +218,7 @@ def GenerateMultipleProblem(tmp):
             while i[id] == ' ' or i[id] == '.' or i[id] == '1' or i[id] == '2' or i[id] == '3' or i[id] == '4':
                 id += 1 
             tempt['content'] = i[id::]
+            tempt['options'] = []
             check = False
             continue
         if i[0:2] == '문제':
@@ -128,7 +234,20 @@ def GenerateMultipleProblem(tmp):
                 b = i[id::]
                 tempt['content'] = b
                 tempt['options'] = []
-        elif len(i) > 0 and i[0]!= '-' and i[0] != ' ' and i[0:2] != '정답' and i[0:2] != '정닱'  and 1 <= int(i[0]) <= 4:
+        if i[0:7] == 'problem':
+            if len(i) == 7:
+                check = True
+            else:
+                id = 7
+                while id <len(i) and i[id] == ' ':
+                    id += 1
+                if len(i) == id:
+                    check = True
+                    continue
+                b = i[id::]
+                tempt['content'] = b
+                tempt['options'] = []
+        elif len(i) > 0 and i[0]!= '-' and i[0] != ' ' and i[0:2] != '정답' and i[0:2] != '정닱'  and i[1] == '.' and 1 <= int(i[0]) <= 4:
             b = f'{i[0]}번 : {i[4:]}'
             tempt['options'].append(b)
         elif i[0:2] == '정답' or i[0:2] == '정닱':
@@ -148,6 +267,20 @@ def GenerateMultipleProblem(tmp):
             rtr.append(tempt)
             tempt = dict()
             continue
+        elif i[0:6] == 'Answer':
+            tt = ''
+            ch = 0
+            ttt = 0
+            for j in i:
+                if ch == 12:
+                    tt += j
+                if ch < 12:
+                    ch += 1
+                    continue
+                if j == '1' or j == '2' or j == '3' or j == '4' :
+                    ttt = int(j)
+                    ch = 1
+            tempt['answer'] = f'정답 : {ttt}번  {tt}'
     # print(rtr)
     return rtr
 
@@ -199,6 +332,7 @@ def Code_problem(tmp):
             
 @api_view(['POST'])
 def GenerateQuestion(request):
+    global llll
     print(request.data.get('selections'))
     
     ans = {}
@@ -207,17 +341,7 @@ def GenerateQuestion(request):
     coursename = request.data.get('course_name') # course name 가져오기
     # lectureid = request.data.get('lecture_id') # course name 가져오기
     keyword = request.data.get('selectedKeywords') # course name 가져오기
-    print(keyword)
-    print(keyword[0])
-    print(coursename)
-    crawl_idx = Sub_dict[coursename]
-    print(crawl_idx)
-    print(crawl_lst)
-    rags = ''
-    for i in keyword:
-        rags += crawl_lst[crawl_idx](i)
-    print(rags)
-    print(len(rags))
+    rags = llll[coursename+'-'+keyword[0]]
     professor_user_name = request.user.username # professor username 가져오기
     professor_user_id = request.user.id # professor username 가져오기
     for _ in range(10):
@@ -229,7 +353,7 @@ def GenerateQuestion(request):
             if 1 <= Quest_dict[tempt] <= 3 and m == Quest_dict[tempt]:
                 tmp = dict()
                 tmp['type'] = Quest_dict[tempt]
-                a, t = query_view(request,Quest_dict[tempt], request.data.get('selections')[tempt], coursename, rags, tempt_problem)
+                t = friend_completion(request,Quest_dict[tempt], request.data.get('selections')[tempt], coursename, rags, tempt_problem)
                 tmp['items'] = GenerateMultipleProblem(t)
                 tmp['count'] = request.data.get('selections')[tempt]
                 c = request.data.get('selections')[tempt]
@@ -572,21 +696,21 @@ def feed(request): # for professor
     for idx, pro in enumerate(problem_lst):
         lst = list(pro.split("$$"))
         if int(lst[0]) == 1 or int(lst[0]) == 2 or int(lst[0]) == 3:
-            full_query += f'{idx+1} 번 문제\n{lst[1]} \n {lst[2]} \n {lst[3]} \n {lst[4]} \n {lst[5]} \n 정답 : {lst[6]} \n'
+            full_query += f'{idx+1} th question\n{lst[1]} \n {lst[2]} \n {lst[3]} \n {lst[4]} \n {lst[5]} \n answer : {lst[6]} \n'
         elif int(lst[0]) == 4 or int(lst[0]) == 5 or int(lst[0]) == 6:
-            full_query += f'{idx+1} 번 문제\n{lst[1]} \n 정답 : {lst[2]} \n'    
+            full_query += f'{idx+1} th question\n{lst[1]} \n answer : {lst[2]} \n'    
     obj = answer.objects.filter(lecture_id = lecture__id)
     
-    full_query += '''\n 문제들은 다음과 같고 이제 학생들의 답안을 알려줄게 답안을 전부 종합해서 피드백을 해줘. 단 출력에는 규칙이 있고 이 규칙들을 반드시 지켜야해.
-                    네 알겠습니다 같은 답변은 전부 뺴고 필요한 답변만 해줘.
-                    일단 시작은 각 문제별로 몇 명이 맞았는지 알려줘. 양식은 다음과 같이 알려줘.
-                    문제번호 맞춘 사람 수 문제번호랑 맞춘 사람 수는 번, 명 표시할 필요없이 숫자만 넣어줘. 숫자 이외에는 어떤 것도 붙이지마.
-                    위와 같은 양식으로 모든 문제에 대해서 출력하고 그 밑에는 학생들의 이해도에 대한 피드백을 작성해줘.
-                    학생들의 수업내용에 관한 이해를 체크하기 위해 낸 문제들이고 답안을 종합해서 어디 부분에 이해가 부족하고 어디 부분은 이해가 잘 되어있다는 피드백이면 돼.
-                    대학교 학부 1~2학년 학생들이 처음 배우는 상황이기 때문에 애매모호하게 어느정도만 이해했다고 판단되는 경우에는 맞았다고 판단해줘.
-                    학생들 개개인에 대한 피드백은 해 줄 필요없고 전체적으로 종합한 다음에 피드백 해줘.
-                    문제별로 피드백하거나 비슷한 내용을 묶어서 피드백해줘. 최소 석사학위 이상을 가진 전문가가 본다는 가정하에 자세하게 피드백해줘.
-                    '피드백 :' 같은 키워드 없이 그냥 피드백 내용만 작성해줘. 
+    full_query += '''\n The problems are as follows and now I will give you the answers of the students. Please give me feedback by summarizing all the answers. However, there are rules in the output and you must follow these rules.
+                    Yes, I understand. Please give me only the necessary answers and exclude all the same answers.
+                    First, tell me how many people got each problem right. Please tell me in the following format.
+                    Problem number Number of people who got it right Please put only numbers without indicating the problem number and the number of people who got it right. Do not attach anything other than numbers.
+                    Output for all problems in the same format as above and below that, write feedback on the students' understanding.
+                    These are the problems I gave to check the students' understanding of the class content and it is enough to give feedback on where the understanding is lacking and where the understanding is good by summarizing the answers.
+                    Since it is the first time that university undergraduate 1st and 2nd year students are learning, please judge it as correct if it is ambiguous and it is judged that it is understood to some extent.
+                    You do not need to give feedback on each student individually, but give feedback after summarizing it as a whole.
+                    Please give feedback by problem or by grouping similar contents. Please give detailed feedback assuming that it is viewed by a professional with at least a master's degree.
+                    Please write only the feedback content without keywords such as 'Feedback :'.
                     '''
     cnt = len(obj)
     for idx, tempt in enumerate(obj):
@@ -594,13 +718,13 @@ def feed(request): # for professor
         answer_lst = [tempt.answer_1,tempt.answer_2,tempt.answer_3,tempt.answer_4,tempt.answer_5,tempt.answer_6,tempt.answer_7,tempt.answer_8,tempt.answer_9,tempt.answer_10]
         while answer_lst[len(answer_lst)-1] == '':
             answer_lst.pop()
-        tmp = f'{idx+1}번 학생 답안 \n\n'
+        tmp = f'{idx+1}th student answer \n\n'
         for idx,ans in enumerate(answer_lst):
-            tmp += f'{idx+1} 번 문제 답안 : {ans} \n'
+            tmp += f'{idx+1} th question answer : {ans} \n'
         tmp += '\n\n'
         full_query += tmp
     print(full_query)
-    t, answer_1 = query_view_feedback(request, full_query)
+    answer_1 = chat_function(full_query)
     rtr = {}
     rtr_lst = list(answer_1.split("\n"))
     feed_tempt = ''
@@ -710,6 +834,7 @@ def lecture_view(request): # for student
     for i in all_lecture:
         tempt = dict()
         tempt['course'] = i.course_name
+        tempt['name'] = i.username
         tempt['professor'] = i.name # 실제이름
         tempt['lecture_id'] = i.id
         obj = student_lecture.objects.filter(username = user_name, course_name = i.course_name)
@@ -751,7 +876,7 @@ def my_lecture_show(request): # for student
             check = 1
         tempt = dict()
         tempt['course'] = i.course_name
-        tempt['professor'] = tmp.name
+        tempt['professor'] = tmp.username
         tempt['lecture_id'] = i.lecture_id
         tempt['check'] = check
         rtr['lecture'].append(tempt)

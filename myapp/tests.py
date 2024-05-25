@@ -1,16 +1,18 @@
 import os
-from langchain_core.prompts import PromptTemplate
-from langchain_upstage import ChatUpstage
-from langchain_core.output_parsers import StrOutputParser
+import deepl
+from dotenv import load_dotenv
+from langchain_community.chat_models.friendli import ChatFriendli
 from django.shortcuts import render
 from django.shortcuts import render, HttpResponse, redirect
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-import openai
 import os
 import environ
-
+import requests
+import json
+from langchain_community.chat_models.friendli import ChatFriendli
+import deepl
 from rest_framework.permissions import IsAuthenticated
 user_data = dict()
 
@@ -18,43 +20,22 @@ from pathlib import Path
 from django.shortcuts import render 
 from django.http import JsonResponse
 from myapp import gpt_prompt
-import openai
+from openai import OpenAI
 import os
 from .models import course, professor_lecture, student_lecture, problem, answer, feedback_list
 from Login.models import school
 from .crawling import crawl_lst
 from datetime import datetime
-# Get the API key from environment variable
-api_key = 'JMqcRMsdqKn1tJllEulhhA1S9OaJE9im'
+# 환경 변수 로드
+load_dotenv()
+FRIENDLI_TOKEN ="flp_OydC1Y4tVFBfs1cgI5u0h9bUkQnNDrROcj3ARS751k083"
 
-# 모델 2개 설정
-llm = ChatUpstage(upstage_api_key=api_key)  # Solar 기본 모델
-llm_contextual = ChatUpstage(upstage_api_key=api_key)  # Context 기반 모델
-
-# 언어 모델에 대한 입력을 구조화하기 위한 프롬프트 템플릿, 모델에게 제공된 문맥과 질문을 기반으로 가장 정확한 답변을 제공하도록 요청.
-prompt_template = PromptTemplate.from_template(
-    """
-    Based on the following context and previous interactions, please provide the most accurate and relevant answer to the question. 
-    If the context does not contain the information needed, please state "The information is not present in the context."
-    Answer in a clear and concise manner.
-    ---
-    Previous Interactions:
-    {previous_interactions}
-    ---
-    Current Question: {question}
-    ---
-    Context: {Context}
-    """
+llm = ChatFriendli(
+    model="meta-llama-3-70b-instruct", friendli_token=FRIENDLI_TOKEN
 )
 
-
-
-# 체인 생성 -> 프롬프트 템플릿, context 기반 언어 모델 및 문자열 출력 parser를 사용하여 처리 체인을 생성. 이 체인은 입력을 처리하고 응답을 생성하는 데 사용
-chain_contextual = prompt_template | llm_contextual | StrOutputParser()
-
-# llm_contextual이 참고할 context 생성(모든 사전 정보는 여기 들어감)
-context = """
-챗봇의 이름은 '이소다' 이고, 음료수 데미소다를 마시다가 떠오른 'iSoda'를 한글로 소리나는대로 지은 이름입니다.
+context_data = """
+"챗봇의 이름은 '이소다' 이고, 음료수 데미소다를 마시다가 떠오른 'iSoda'를 한글로 소리나는대로 지은 이름입니다.
 
 강원도 춘천시에 위치한 '한림대학교'의 연구실 정보입니다.
 NLP(자연어처리) 연구실의 지도교수님은 '김유섭' 교수님입니다.
@@ -108,46 +89,36 @@ AAC 연구실의 위치는 공학관 4층에 있는 1409호실 입니다.
 {'기업이름' : '우아한 형제들', '채용분야' : '자율주행 배달 로봇 Dilly 오퍼레이터', '위치' : '서울시 송파구', '경력' : '무관(신입포함)', '학력' : '학력무관', '근무형태' : '계약직 1년', '출퇴근 시간' : '미기재', '모집인원' : '0명', '모집기간' : '2024년 6월 26일', '관련 링크' : 'https://www.saramin.co.kr/zf_user/jobs/relay/view?isMypage=no&rec_idx=48080504&recommend_ids=eJxVj8sJQ0EMA6vJ3fJP8jmFpP8u8iCw3vg2CEZyMmhu%2FRHw4jtlI%2FdZRHSclLJIYVOqpIMYBHlhkbbYqFrzU%2FrcqgqkrhlRytM7puhVmUaJS%2BWFWASY9Zda7gz3hB9zOHOuF9oicKXSz%2FwFUKNADQ%3D%3D&view_type=search&searchword=%EC%9A%B0%EC%95%84%ED%95%9C+%ED%98%95%EC%A0%9C%EB%93%A4&searchType=search&gz=1&t_ref_content=generic&t_ref=search&relayNonce=9950c48148eb7444650a&paid_fl=n&search_uuid=a1e3550b-0883-4829-b327-abb8c1832243&immediately_apply_layer_open=n#seq=0'},
 {'기업이름' : '업스테이지', '채용분야' : 'AI Solution Reliability Engineer', '위치' : '경기도 용인시', '경력' : '경력 2년~10년', '학력' : '학력무관', '근무형태' : '정규직', '출퇴근 시간' : '미기재', '모집인원' : '0명', '모집기간' : '미기재', '관련 링크' : 'https://www.saramin.co.kr/zf_user/jobs/relay/view?isMypage=no&rec_idx=45820606&recommend_ids=eJxNj8sVA1EIQqvJHvyh6xQy%2FXeR5OTMc5ZXBSEa02ZzNfnSO4qBjLoG9sMGvbzurRoezRubYZg4WiBybLXSfPE%2BNlKRB1HTXOSgkxvD4TPHilbpx0ouGOqhpUuPVN%2FJ7KOk1Is9HVvBYIlTQZOKWmeo%2B6%2F9AEC9QCg%3D&view_type=search&searchword=%EC%97%85%EC%8A%A4%ED%85%8C%EC%9D%B4%EC%A7%80&searchType=search&gz=1&t_ref_content=generic&t_ref=search&relayNonce=4f147ce9e2cad3713941&paid_fl=n&search_uuid=dadb63f9-f8b1-4ab0-ac98-c99cd3a8264d&immediately_apply_layer_open=n#seq=0'},
 {'기업이름' : '비상교육', '채용분야' : '하계 현장실습 연수생', '위치' : '경기도 과천시', '경력' : '인턴', '학력' : '학력무관', '근무형태' : '인턴쉽', '출퇴근 시간' : '미기재', '모집인원' : '4명', '모집기간' : '2024년 5월 26일 23:59까지', '관련 링크' : 'https://career.visang.com/job_posting/y9ZwYgG4'}
-"""
-# 이전 질문과 답변을 저장해서 참고할 사전
-previous_qa = {}
 
-def get_answer(question, history_limit=3):
-    global previous_qa
-
-    # 이전 질문과 답변 중 최근 'history_limit' 개의 항목을 포함
-    limited_qa = list(previous_qa.items())[-history_limit:]
-    previous_interactions = "\n".join([f"Q: {q}\nA: {a}" for q, a in limited_qa])
-
-    # Add previous limited Q&A to the context
-    combined_context = context + "\n" + previous_interactions
-
-    # Invoke the context-based model with the combined context
-    result = chain_contextual.invoke({"question": question, "Context": combined_context, "previous_interactions": previous_interactions})
-    answer = result.content if hasattr(result, 'content') else result  # 응답에서 content만 추출
+"""    
     
-    # If the information is not found in the context, use the default model
-    if "The information is not present in the context." in answer or not answer.strip():
-        result = llm.invoke(question)
-        answer = result.content if hasattr(result, 'content') else result  # 응답에서 content만 추출
+system_prompt = {
+    "role": "system",
+    "content": f"You are a helpful assistant. Always answer in Korean. Use the provided context to answer questions related to it, but also feel free to answer general questions. If you don't know the answer, use basic model.'\n\nContext:\n{context_data}"
+}
 
-    # Store the question and answer
-    previous_qa[question] = answer
-    return answer
+auth_key = "44c49157-0a84-4b83-954f-1b9125baf794:fx"
+translator = deepl.Translator(auth_key)
+new_messages = [system_prompt]
+@api_view(['POST'])
+def chat_response(request):
+    global new_messages
+    newmessages = [system_prompt]
+    message = request.data.get('query')
+    for user, chatbot in new_messages:
+        newmessages.append({"role": "user", "content": user})
+        newmessages.append({"role": "assistant", "content": chatbot})
+    newmessages.append({"role": "user", "content": message})
+    new_messages = newmessages.copy()
+    response = llm.invoke(new_messages)
+
+    translated_response = translator.translate_text(response.content, target_lang="KO").text
+    return Response({'response':translated_response}, status=200)  
 
 @api_view(['GET'])
 def chat_init(request):
-    global previous_qa
-    previous_qa = {}
+    global new_messages
+    new_messages = [system_prompt]
     return Response({'message':'success'}, status=200)
 # Main loop for chat interface
-
-
-@api_view(['POST'])
-def chat_response(request):
-    print("챗봇 이소다입니다! 한림대학교 연구실 및 인턴쉽 정보에 대해서 물어보세요!")
-    user_input = request.data.get('query')
-    response = get_answer(user_input)
-    print(f"이소다: {response}")
-    return Response({'response':response}, status=200)
 

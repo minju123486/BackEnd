@@ -23,13 +23,13 @@ from openai import OpenAI
 import os
 from community.models import post
 from .models import daily_model, daily_class
-env = environ.Env()
-environ.Env.read_env(Path(__file__).resolve().parent/'.env')
+# env = environ.Env()
+# environ.Env.read_env(Path(__file__).resolve().parent/'.env')
 # openai.api_key = env('Key')
 # 인삿말
 client = OpenAI(
     # This is the default and can be omitted
-    api_key=env('Key')
+    api_key= "sk-proj-G1C3bQtNGqVvdo1dfu4IT3BlbkFJaWHW58ubXnAR3vlaNbqK"
 )
 def hello(where, tmi):
     model_engine = "gpt-3.5-turbo" # 장소 fine-tuning 3.5 turbo model  ft:gpt-3.5-turbo-0125:personal::9JO9ePp4
