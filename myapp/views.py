@@ -710,6 +710,7 @@ def lecture_view(request): # for student
     for i in all_lecture:
         tempt = dict()
         tempt['course'] = i.course_name
+        tempt['name'] = i.username
         tempt['professor'] = i.name # 실제이름
         tempt['lecture_id'] = i.id
         obj = student_lecture.objects.filter(username = user_name, course_name = i.course_name)
