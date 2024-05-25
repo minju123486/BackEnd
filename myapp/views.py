@@ -27,7 +27,7 @@ from datetime import datetime
 # openai.api_key = env('Key')
 client = OpenAI(
     # This is the default and can be omitted
-    api_key= "sk-proj-G1C3bQtNGqVvdo1dfu4IT3BlbkFJaWHW58ubXnAR3vlaNbqK"
+    api_key= "no"
 )
 Sub_dict = {"Java" : 1, "C++" : 2, "Python" : 3}
 llll = {"자바프로그래밍-Arrays" : "luXuJcSJIcw5", "자바프로그래밍-Class Definitions" : "a41ZG0hk2twJ", "자바프로그래밍-Classes in Depth 1" : "BbiOoy98Wyi5", "자바프로그래밍-Classes in Depth 2" : "sWGgKi5KqCa6", "자바프로그래밍-Conditional Statements" : "ISsjFKdItU7p", "자바프로그래밍-Constructors" : "yowiRGZTt6jd", "자바프로그래밍-Control Statements" : "ZqOtWYcaHo6P", "자바프로그래밍-Creating Objects" : "kkoVuywBXCNa", "자바프로그래밍-Data Types" : "b2hWgyTmqimV", "자바프로그래밍-Inheritance" : "hFZn6DiEgJkZ", "자바프로그래밍-Iteration Statements" : "es7n8OVm1PnO", "자바프로그래밍-Operators" : "WUY7Xkj41TJi", "자바프로그래밍-Overriding" : "EndmGmlEqpsq", "자바프로그래밍-Using Objects" : "oH6BmXs9m6RP", "C++프로그래밍-Constructors" : "3u69DmLLf5Hb", "C++프로그래밍-arithmetic operators" : "F44nLRsiqydg", "C++프로그래밍-Destructors" : "zCjoBh6iNVCn", "C++프로그래밍-Function Overloading" : "S2LwTGWcgHGU", "C++프로그래밍-Functions" : "4DKNfTAxbLoM", "C++프로그래밍-Inheritance" : "1JgbN6hi14Ik", "C++프로그래밍-Iteration statements" : "3KFCsIq9OMxV", "C++프로그래밍-pointer new and delete operators" : "orgeg9QPujko", "C++프로그래밍-Pointer operators" : "QBZrZ4Ze9DgC", "C++프로그래밍-Selection statements (if-else statements)" : "pUo77VMoVrWU", "C++프로그래밍-shared_ptr" : "TaWAtTe8JNZb", "C++프로그래밍-smart pointers" : "JSTucnFuIwtc", "C++프로그래밍-String and Character Literals" : "lREJrk9fil2E", "C++프로그래밍-unique_ptr" : "hVR275pTMInf", "파이썬프로그래밍-A Brief Introduction to Python" : "EtXRJAytipFQ", "파이썬프로그래밍-Classes" : "Mjqb8EhhRLdb", "파이썬프로그래밍-Data Structure" : "jtEYJ29v4zA5", "파이썬프로그래밍-Errors and Exceptions" : "G4zOpdHNBlJA", "파이썬프로그래밍-Input and Output" : "aegIWPDWEjGZ", "파이썬프로그래밍-Modules" : "sp0hbuD6Uez3", "파이썬프로그래밍-Other Control Flow Tools" : "3fA5ueffMiNH", "파이썬프로그래밍-Standard Library Quick Look - Part 2" : "q2PhVusiIitU", "파이썬프로그래밍-Standard Library Quick Look" : "miclvsK4ZpjF", "파이썬프로그래밍-Using the Python Interpreter" : "nzeu0Ypmodfl", "파이썬프로그래밍-Virtual Environments and Packages" : "2LI0V1foae43"}
@@ -101,7 +101,7 @@ def friend_completion(prompt, numberKey,count, subject, rags, tempt_problem):
 
     message = llm.call_as_llm(message=rag_message)
     client = OpenAI(
-    api_key="up_n76I9G4SKzOq3N463RI0V2x3r7d6n",
+    api_key="",
     base_url="https://api.upstage.ai/v1/solar"
     )
     content = message
