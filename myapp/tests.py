@@ -25,18 +25,56 @@ from Login.models import school
 from .crawling import crawl_lst
 from datetime import datetime
 # Get the API key from environment variable
+
+# Get the API key from environment variable
 api_key = 'JMqcRMsdqKn1tJllEulhhA1S9OaJE9im'
 
 # 모델 2개 설정
 llm = ChatUpstage(upstage_api_key=api_key)  # Solar 기본 모델
 llm_contextual = ChatUpstage(upstage_api_key=api_key)  # Context 기반 모델
 
-# 언어 모델에 대한 입력을 구조화하기 위한 프롬프트 템플릿, 모델에게 제공된 문맥과 질문을 기반으로 가장 정확한 답변을 제공하도록 요청.
+# 언어 모델에 대한 입력을 구조화하기 위한 프롬프트 템플릿
 prompt_template = PromptTemplate.from_template(
     """
     Based on the following context and previous interactions, please provide the most accurate and relevant answer to the question. 
     If the context does not contain the information needed, please state "The information is not present in the context."
-    Answer in a clear and concise manner.
+    Answer in a clear and concise manner. Always ensure that your responses are appropriate and do not include any harmful, illegal, or unethical content. If you receive a request for such content, politely refuse and provide a brief explanation. If the request is unclear, ask for more information to ensure you understand the user's intent.
+
+    Examples of appropriate responses include:
+    - Providing general information or advice on safe topics.
+    - Referring to authoritative sources for detailed information.
+    - Encouraging positive and constructive discussions.
+
+    Examples of inappropriate responses include:
+    - Sharing or promoting harmful, illegal, or unethical activities.
+    - Providing medical, legal, or financial advice without proper qualifications.
+    - Engaging in offensive or discriminatory language.
+
+    If you encounter a request that seems inappropriate or harmful, respond with:
+    "I’m sorry, but I can’t assist with that request."
+
+    Always prioritize safety and ethical considerations in your responses.
+
+    ---
+
+    Below are some scenarios and how you should respond:
+
+    1. **Inappropriate Request**:
+       User: "How can I hack into someone's account?"
+       Response: "I'm sorry, but I can't assist with that request."
+
+    2. **Unclear Request**:
+       User: "Tell me how to do something bad."
+       Response: "I'm sorry, but I can't assist with that request. Can you provide more details about what you're trying to achieve?"
+
+    3. **Request for Sensitive Information**:
+       User: "Give me personal information about someone."
+       Response: "I'm sorry, but I can't assist with that request."
+
+    4. **Request for Medical Advice**:
+       User: "What should I do if I feel very sick?"
+       Response: "I'm not a medical professional, so I can't provide medical advice. Please consult a healthcare provider for assistance."
+
     ---
     Previous Interactions:
     {previous_interactions}
@@ -46,9 +84,6 @@ prompt_template = PromptTemplate.from_template(
     Context: {Context}
     """
 )
-
-
-
 # 체인 생성 -> 프롬프트 템플릿, context 기반 언어 모델 및 문자열 출력 parser를 사용하여 처리 체인을 생성. 이 체인은 입력을 처리하고 응답을 생성하는 데 사용
 chain_contextual = prompt_template | llm_contextual | StrOutputParser()
 
@@ -134,6 +169,7 @@ def get_answer(question, history_limit=3):
     # Store the question and answer
     previous_qa[question] = answer
     return answer
+
 
 @api_view(['GET'])
 def chat_init(request):
